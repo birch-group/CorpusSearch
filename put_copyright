@@ -1,0 +1,146 @@
+#!/bin/sh
+# prepend copyright notice to .java files
+
+cd basicinfo 
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd coding
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../command
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../csearch
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../drawtree
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd graphical
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../corpus_tags
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../../frames
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../io
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../label_lexicon
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../lexicon
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../print
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../revise
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../search
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../search_result
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../stats
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../syntree
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done
+
+cd ../tag_list
+
+for FILE in `find -name "*java"`; do
+echo "will add copyright notice to " $FILE
+( cat ../copyright_notice $FILE ) | cat > $FILE.new
+mv $FILE.new $FILE
+done

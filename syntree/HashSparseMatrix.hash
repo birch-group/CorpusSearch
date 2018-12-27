@@ -1,0 +1,318 @@
+/*
+  Sparse Matrices implemented as hash tables.
+ */
+package syntree;
+
+import java.io.*;
+import java.util.*;
+import java.lang.reflect.*;
+
+public class SparseMatrix {
+
+    private HashMap label_hash;
+    private HashMap end_hash;
+    private int offset;
+    private Integer minus1 = new Integer(-1);
+    private Integer label_key;
+    private Integer end_key;
+
+    public SparseMatrix () {
+        label_hash = new HashMap();
+        end_hash = new HashMap();
+	label_key = new Integer(0);
+	end_key = new Integer(0);
+        offset = 0;
+    }
+
+    public void setSparseMatrix(SynTree spaz) {
+        label_hash = spaz.GetLabelHash();
+        end_hash = spaz.GetEndHash();
+        offset = 0;
+        return;
+    }
+
+    public HashMap GetLabelHash() {
+	return label_hash; }
+
+    public HashMap GetEndHash() {
+	return end_hash; }
+
+    //  to generate a sample matrix.  Called like this:
+    //    sparse = new SynTree("EXAMPLE");
+    public SparseMatrix (String Example) {
+
+        label_hash = new HashMap();
+        end_hash = new HashMap();
+	label_key = new Integer(0);
+	end_key = new Integer(0);
+        offset = 0;
+	//        this.setSample();
+        return;
+    }
+
+    public void setSample() {
+        String labels, indices;
+
+        labels = "IP-MAT CONJ(And ADVP(ADV(so PP P(by NP(NS(meanes NP-SBJ ";
+        labels += "NPR(kynge NPR(Uther VBD(send PP P(for NP D(this N(duk ";
+        labels += "IP-PPL VAG(chargyng NP-OB1(PRO(hym IP-INF TO(to VB(brynge";
+        labels += " NP-OB1 PRO$(his N(wyf PP P(with NP(PRO(hym E_S(, ";
+        labels += "ID(CMMALORY,2.8";
+        indices = "50 2 5 11 8 11 16 14 16 18 26 21 26 24 26 48 29 32 48 ";
+        indices += "35 37 42 40 42 48 45 48 50 52";
+	//        this.buildFromStrings(labels, indices);
+        return;
+    }
+    /*
+    public void buildFromStrings(String labels, String indices) {
+
+        this.space_split(labels, label_hash, false);
+        this.space_split(indices, end_hash, true);
+        return;
+    } // end method buildFromStrings
+
+    public void space_split (String to_split, HashMap to_store, boolean to_Int) {
+        int prev_dex, space_dex;
+        Integer dex;
+        String item;
+
+        prev_dex = 0;
+        while (prev_dex < to_split.length()) {
+            space_dex = to_split.indexOf(" ", prev_dex);
+            if (space_dex < 0) {
+                item = to_split.substring(prev_dex, to_split.length());
+                if (to_Int) {
+                    dex = new Integer(item);
+                    to_store.addElement(dex); }
+                else { to_store.addElement(item); }
+                break;
+            }
+            item = to_split.substring(prev_dex, space_dex);
+            if (to_Int) {
+                dex = new Integer(item);
+                to_store.addElement(dex); }
+            else { to_store.addElement(item); }
+            prev_dex = space_dex + 1;
+        } // end while
+        return;
+    } // end method space_split
+
+    */
+    public boolean isEmpty() {
+        return(label_hash.isEmpty());
+    } // end method isEmpty()
+
+    public void RemoveAllElements () {
+        label_hash.clear();
+        end_hash.clear();
+	label_key = new Integer(0);
+	end_key = new Integer(0);
+        return;
+    }
+
+    public void space_split (String to_split, Vector to_store, boolean to_Int) {
+        int prev_dex, space_dex;
+        Integer dex;
+        String item;
+
+        prev_dex = 0;
+        while (prev_dex < to_split.length()) {
+            space_dex = to_split.indexOf(" ", prev_dex);
+            if (space_dex < 0) {
+                item = to_split.substring(prev_dex, to_split.length());
+                if (to_Int) {
+                    dex = new Integer(item);
+                    to_store.addElement(dex); }
+                else { to_store.addElement(item); }
+                break;
+            }
+            item = to_split.substring(prev_dex, space_dex);
+            if (to_Int) {
+                dex = new Integer(item);
+                to_store.addElement(dex); }
+            else { to_store.addElement(item); }
+            prev_dex = space_dex + 1;
+        } // end while
+        return;
+    } // end method space_split
+
+    public int size () {
+        return(label_hash.size()); }
+
+    /*
+      returns e.g. [1, IP-MAT], where 1 is the start_index 
+          and IP-MAT is the label.  Compatible with CorpusSearch.
+    */
+    public Node NodeAt (Integer x) {
+        Node my_node;
+        my_node = new Node(x, this.LabelAt(x));
+        return my_node;
+    }
+
+    /*
+      returns e.g. [1, IP-MAT], where 1 is the start_index 
+          and IP-MAT is the label.  Compatible with CorpusSearch.
+    */
+    public Node NodeAt (int x) {
+        Integer index = new Integer(x);
+        return (NodeAt(index));
+    }
+
+    public void SetLabelAt(String label, int x) {
+	Integer x_Int = new Integer(x);
+	this.SetLabelAt(label, x_Int);
+    }
+
+    public void SetLabelAt(String label, Integer x) {
+	label_hash.put(x, label);
+    }
+
+    // SetEndDexAt(value, key)
+    public void SetEndDexAt(Integer dex, int x) {
+        Integer x_Int = new Integer(x);
+	this.SetEndDexAt(dex, x_Int);
+    }
+
+    public void SetEndDexAt(int dex, int x) {
+	Integer dexInt = new Integer(dex);
+	Integer xInt = new Integer(x);
+	this.SetEndDexAt(dexInt, xInt); }
+
+    // should I also update "end_key"?
+    public void SetEndDexAt(Integer dex, Integer x) {
+	end_hash.put(x, dex);
+    }
+	
+    public String LabelAt (int x) {
+	Integer x_Int = new Integer(x);
+        return (this.LabelAt(x_Int));
+    }
+
+    public String LabelAt (Integer x) {
+	//if (!label_hash.containsKey(x)) {
+	//  System.err.println("no label at this key: " + x);
+	//  return ("NULL");
+	//}
+        return((String)label_hash.get(x));
+       }
+
+    public Integer EndDexAt (Integer x) {
+	if (!end_hash.containsKey(x)) {
+	    return (minus1);
+	}
+	return((Integer)end_hash.get(x));			  
+    }
+
+    public Integer EndDexAt (int x) {
+	Integer x_Int = new Integer(x);
+	return(this.EndDexAt(x_Int));
+    }
+
+    public int intEndDexAt(int x) {
+	return((this.EndDexAt(x)).intValue()); }
+
+    private void IncrementLabelKey() {
+	label_key = new Integer(label_key.intValue() + 1);
+    }
+
+    private void IncrementEndKey() {
+	end_key = new Integer(end_key.intValue() + 1);
+    }
+
+    public void AddLabel (String label) {
+	label_hash.put(label_key, label);
+	this.IncrementLabelKey();
+        return;
+    }
+
+    public void AddDex (Integer x) {
+	end_hash.put(end_key, x);
+	this.IncrementEndKey();
+    }
+
+    public void AddDex (int x) {
+        Integer new_x = new Integer(x);
+        this.AddDex(new_x);
+        return;
+    }
+
+    public void AddDex (String dex_str) {
+        try {
+            Integer Int_str = new Integer(Integer.parseInt(dex_str));
+            this.AddDex(Int_str);
+        }
+        catch (Exception e) {
+            System.err.print("in SparseMatrix.AddDex:  ");
+            System.err.println("could not parse to Int: " + dex_str);
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+            System.exit(0);
+        }
+        finally {
+            return;
+        }
+    }
+
+    public void AddItem (String text, Integer dex) {
+	this.AddLabel(text);
+	this.AddDex(dex); 
+	return; }
+
+    /* checks whether current sparse matrix is well formed.  */
+    public boolean Verify () {
+        if (end_hash.size() != label_hash.size()) {
+            System.err.print("ERROR!  label_hash and end_hash ");
+            System.err.println("not the same size:");
+            System.err.print("label_hash.size, end_hash.size:  ");
+            System.err.println(label_hash.size() + ", " + end_hash.size());
+            return false;
+        }
+        else
+            return true;
+    }
+
+    public void PrintToPrintWriter (PrintWriter outrage) {
+        int j;
+
+        for (j = 0; j < this.size(); j++) {
+            outrage.print(this.LabelAt(j) + " ");
+        }
+        outrage.println("");
+        for (j = 0; j < this.size(); j++) {
+            outrage.print((this.EndDexAt(j)).toString() + " ");
+        }
+        outrage.println("");
+        outrage.println("");
+        outrage.flush();
+        return;
+    } // end method Print
+
+    public void PrintToSystemErr () {
+        int j;
+
+        for (j = 0; j < this.size(); j++) {
+            System.err.print(this.LabelAt(j) + " ");
+        }
+        System.err.println("");
+        for (j = 0; j < this.size(); j++) {
+            System.err.print((this.EndDexAt(j)).toString() + " ");
+        }
+        System.err.println("");
+        System.err.println("");
+        return;
+    }
+
+    public static void main (String[] args) {
+        SparseMatrix sparse = new SparseMatrix("EXAMPLE");
+        sparse.PrintToSystemErr();
+        return;
+    }
+
+
+}// end class SparseMatrix
+
+
+
+
+
+

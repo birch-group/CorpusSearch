@@ -1,0 +1,18 @@
+#!/bin/sh
+cd CodingParse
+java -classpath ../javacc/javacc.jar javacc ParseCodingQuery.jj
+cd ../
+javac -classpath . CodingParse/ParseCodingQuery.java
+cd CSParse
+java -classpath ../javacc/javacc.jar javacc ParseQuery.jj
+cd ../
+javac -classpath . CSParse/ParseQuery.java
+cd FramesParse
+java -classpath ../javacc/javacc.jar javacc ParseFrames.jj
+cd ../
+javac -classpath . FramesParse/ParseFrames.java
+jikes csearch/CorpusSearch.java
+
+javadoc -d ../../../../public_html/CSStuff/newCSCode csearch/*.java
+
+

@@ -1,0 +1,44 @@
+/*
+  Beth Randall: Jan 2001
+  PrintFrames.java -- prints out frames_vec.
+  called if subcats is true.
+*/
+package frames;
+
+import java.io.*;
+import java.util.*;
+
+public class PrintFrames {
+
+    /*
+      List -- prints out contents of ListFrames object.
+    */
+    public static void List (ListFrames fist, PrintWriter OutStuff) {
+	int i, j;
+	SameKernelBucket bucko;
+	Kernel kern;
+	SingleFrame framed;
+
+	for (j = 0; j < fist.size(); j++) {
+	    bucko = fist.getBucket(j);
+	    kern = bucko.getSynKernel();
+	    OutStuff.println("");
+	    OutStuff.println("/*");
+	    OutStuff.println(kern.AllLabels());
+	    OutStuff.println("*/");
+	    OutStuff.println("");
+	    framed = bucko.getFrame(j);
+	    for (i = 1; i < framed.size(); i++) {
+		if (i == framed.size() - 1) { 
+		    OutStuff.print(framed.sisLabelAt(i)); }
+		else {
+		    OutStuff.print(framed.sisLabelAt(i) + ", "); }
+	    }
+	    OutStuff.print(framed.getIDString());
+	    OutStuff.println("");
+	} // end for j = 0; j < fist.size(); j++
+	OutStuff.println("");
+	return;
+    } // end method List
+
+} // end class PrintFrames

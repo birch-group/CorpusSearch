@@ -1,0 +1,85 @@
+package drawtree;
+
+import java.awt.*;
+import java.awt.event.*;
+import print.*;
+import syntree.*;
+
+
+public class MyEvents {
+
+    public static UrTextArea urg;
+    public static InputTextField intf;
+    public static ErrorMeTextField errtf;
+    public static AnnounceTextField anntf;
+    public static QueryTextArea qta;
+    public static HelpButton hb;
+    public static BackButton bb;
+    public static NextButton nb;
+    public static UndoButton ub;
+    public static RedoButton rb;
+    public static DeleteButton db;
+    public static ReplaceLabelButton rlb;
+    public static AddInternalNodeButton ainb;
+    public static CoIndexButton cib;
+    public static LeafBeforeButton lbb;
+    public static LeafAfterButton lab;
+    public static MoveToButton mtb;
+    public static MergePreviousButton mpb;
+    public static MergeFollowingButton mfb;
+    public static SplitButton sb;
+    public static QuitFileButton qfb;    
+    public static QuitMeButton qb;
+    public static BlankButton blb, blb2;
+    public static ShowOnlyButton sob;
+    public static ShowAllButton sab;
+    public static ShowOnlyListButton solb;
+    public static CollapseButton cb;
+    public static ExpandButton eb;
+    public static ExpandAllButton eab;
+    public static CollapseListButton clb;
+    public static UrText urt = new UrText();
+
+    public static void setUrText(ChangeGraphicTree cgt) {
+	urg.ur_put(urt.toString(cgt.getChangeTree())); }
+  
+    public static void clearTextFields() {
+	errtf.clear();
+	intf.clear(); }
+
+    public static boolean interrupt() {
+	return(MyDialog.interrupt("hope")); }
+
+    public static boolean interrupt(String to_interrupt) {
+	return (MyDialog.interrupt(to_interrupt)); }
+
+    public static void warn(String admonish) {
+	errtf.error_put(admonish); }
+
+    public static void clearButtons() {
+	bb.resetButton();
+	nb.resetButton();
+	ub.resetButton();
+	rb.resetButton();
+	db.resetButton(); 
+	rlb.resetButton();
+	ainb.resetButton();
+	cib.resetButton();
+	lbb.resetButton();
+	lab.resetButton();
+	mtb.resetButton();
+	mpb.resetButton();
+	mfb.resetButton();
+	sb.resetButton();
+	qfb.resetButton();
+	qb.resetButton(); 
+	sob.resetButton();
+	sab.resetButton();
+	solb.resetButton();
+	cb.resetButton();
+	eb.resetButton();
+	eab.resetButton(); 
+	clb.resetButton(); } 
+
+
+}

@@ -1,0 +1,175 @@
+package drawtree;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import syntree.*;
+import basicinfo.*;
+import javax.swing.*;
+import search_result.*;
+
+/** sets the coordinates of super class GraphicTree. */
+public class SetVertGraphicTree extends GraphicTree {
+
+    //public void Init() {}
+
+    public void Init(ChangeTree in_sparse) {
+	super.Init(in_sparse);
+	this.setTreeCoords(); }
+
+    public void Init(ChangeTree in_sparse, SentenceResult indices) {
+	super.Init(in_sparse, indices); 
+        this.setTreeCoords(); }
+
+    public void setTreeCoords () {
+	if (super.sparse.isEmpty()) {
+	    return; }
+	super.partInit();
+	//super.setBulletNode();
+	//	if (!(TreeCanvas.lapse).willCollapse()) {
+	//  bottomUp(); this.setHighlights(); 
+	    //this.compress(); 
+
+	//  super.resetHeight(); 
+  
+	    //super.PrintToSystemErr();
+	//  return; }
+	//else {
+	//  bottomUpCollapse(); this.setHighlights(); 
+	//  return; } }
+	this.setVertCoords(); }
+
+
+    public void setVertCoords() {
+	int i, x_start, x_end, y_start, y_end;
+	Node root, in_node;
+	GraphicNode gnode;
+	Vector daughters;
+
+	x_start = 10; y_start = 10;
+	y_end = y_start + Y_DIFF;
+	root = super.sparse.getRootNode();
+	x_end = myXEnd(root, x_start);
+	gnode = new GraphicNode(root, x_start, x_end, y_start, y_end);
+	super.addGraphicNode(gnode);
+	daughters = super.sparse.getDaughters(root);
+	this.setDaughters(daughters, x_end + 2*X_DIFF, y_start);
+	return;}
+
+    private void setDaughters(Vector daughters, int curr_x, int curr_y) {
+	int i, x_start, x_end, y_start, y_end;
+	Node daughter;
+	GraphicNode gnode;
+	Vector granddaughters;
+
+	if (daughters.isEmpty()) {
+	    return; }
+	x_start = curr_x;
+	y_start = curr_y;
+	for (i = 0; i < daughters.size(); i++) {
+	    daughter = (Node)daughters.elementAt(i);
+	    x_end = myXEnd(daughter, x_start);
+	    y_end = y_start + Y_DIFF;
+	    gnode = new GraphicNode(daughter, x_start, x_end, y_start, y_end);
+	    super.addGraphicNode(gnode);
+	    granddaughters = super.sparse.getDaughters(daughter);
+	    this.setDaughters(granddaughters, x_end + 2*X_DIFF, y_start);
+	    y_start = y_start + 2*Y_DIFF; }
+	return; }
+
+   
+    private void setXandY(GraphicNode gmom, GraphicNode gnode1, 
+			  GraphicNode gnode2, int y_start) {
+	int x_start1, x_end2, x_start_mom, x_end_mom, half;
+
+	x_start1 = gnode1.getXStart();
+	x_end2 = gnode2.getXEnd();
+	half = lengthPerFont(gmom.getLabel())/2;
+	x_start_mom = (x_start1 + x_end2)/2 - half;
+	x_end_mom = x_start_mom + lengthPerFont(gmom.getLabel() + "  ");
+	gmom.setXs(x_start_mom, x_end_mom);
+	gmom.setYs(y_start, y_start - super.FONT_SZ);
+    }
+
+    protected void setHighlights() {               
+	int i;
+	GraphicNode gnode;
+
+	if (!super.has_indices) { return; }
+
+	nodes_loop: for (i = 0; i < super.size(); i++) {
+	    gnode = super.graphicNodeAt(i);
+	    if (super.inHighNodes(gnode.getNode())) {
+		gnode.setHighlight1(true);
+		continue nodes_loop; }
+	    if (super.inHighBounds(gnode.getNode())) {
+		gnode.setHighlight2(true); } }
+	return;
+    }
+
+
+
+    protected boolean is2or3Subtree(Node nodal) {
+	Vector daughters;
+	Node grandd;
+
+	if (super.sparse.IsLeafPOS(nodal) ||
+	    super.sparse.IsLeafText(nodal)) {
+	    return true; }
+	daughters = super.sparse.GetDaughters(nodal);
+	if (daughters.size() == 1) {
+	    grandd = (Node)daughters.firstElement();
+	    if (super.sparse.IsLeafPOS(grandd)) {
+		return true; }}
+	return false; }
+	
+    private int myXEnd(Node leaf, int x_start) {
+	if (super.justInits()) {
+	    return (x_start + lengthPerFont(2)); }
+	return (x_start + lengthPerFont(leaf.getLabel())); }
+
+ 
+    protected void compress() {
+	int i, behind, how_much;
+	Vector daughters;
+	Node daughter;
+
+
+	//first, drop long subtrees.
+	daughters = super.sparse.GetDaughters(super.sparse.getRootNode());
+	for (i = 0; i < daughters.size(); i++) {
+	  daughter = (Node)daughters.elementAt(i);
+	  if (!super.sparse.IsLeafPOS(daughter)) {
+	      super.shiftDownSubtree(daughter,10*Y_DIFF); }}
+	compress_loop: for (i = 1; i < this.size(); i++) {
+	    behind = super.xSpaceBehind(i);
+	    if (behind < 0) {
+		super.shiftRight(i, -behind + (X_DIFF));
+		continue compress_loop; }
+	    if (super.sparse.IsLeafText(i) ||
+		super.sparse.isFirstChild(i)) { 
+		continue compress_loop; }
+	    if (behind > 2*X_DIFF) {
+		super.OKShiftLeft(i, behind); }}
+	super.correctRoot((Node)daughters.firstElement(), 
+		  (Node)daughters.lastElement());
+	return; }
+
+    protected int lengthPerFont (String label) {
+	return ((label.length())*(super.FONT_SZ/2)); }
+
+    protected int lengthPerFont (int x) {
+	return ((x*super.FONT_SZ)/2); }
+
+    protected int getMiddleX(GraphicNode gnode) {
+ 	int midx = 0;
+
+ 	midx = gnode.getXStart();
+ 	try {
+ 	    midx += lengthPerFont(gnode.getLabel())/2; }
+ 	catch (NullPointerException npe) {
+ 	    gnode.PrintToSystemErr(); }
+ 	return midx; }
+
+
+}

@@ -1,0 +1,313 @@
+package drawtree;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import syntree.*;
+import basicinfo.*;
+import javax.swing.*;
+import search_result.*;
+
+/** sets the coordinates of super class GraphicTree. */
+public class SetCompressTree extends GraphicTree {
+
+    //public void Init() {}
+
+    public void Init(ChangeTree in_sparse) {
+	super.Init(in_sparse);
+	this.setTreeCoords(); }
+
+    public void Init(ChangeTree in_sparse, SentenceResult indices) {
+	super.Init(in_sparse, indices); 
+        this.setTreeCoords(); }
+
+    public void setTreeCoords () {
+	if (super.sparse.isEmpty()) {
+	    return; }
+	super.partInit();
+	//super.setBulletNode();
+	if (!(TreeCanvas.lapse).willCollapse()) {
+	    bottomUp(); this.setHighlights(); 
+	    super.resetHeight(); 
+	    //super.PrintToSystemErr();
+	    return; }
+	else {
+	    bottomUpCollapse(); this.setHighlights(); 
+	    return; } }
+   
+    private void bottomUpCollapse () {
+	int i, x_start, x_end, y_start, y_end;
+	int j, k, coll_max_x, end_collapse;
+	Node leaf;
+	GraphicNode gleaf;
+
+	// set nodes in BitSet collapsed_bits, cor
+	TreeCanvas.lapse.setCollapsedBits(super.sparse);
+        y_start = super.MIN_HT - lengthPerFont(super.Y_DIFF); 
+	y_end = y_start - super.FONT_SZ;
+	// first, draw text leaves of tree.
+	x_start = 10;
+	tree_loop:  for (i = 0; i < super.sparse.size(); i++) {
+	    leaf = super.sparse.NodeAt(i);
+	    if (super.sparse.IsLeafText(leaf)) {
+		super.setMaxDepth(leaf);
+		if (TreeCanvas.lapse.isCollapsed(i)) {
+		    coll_max_x = setCollapsedLeaves(i, x_start, y_start);
+		    x_start = coll_max_x + lengthPerFont(super.X_DIFF);
+		    // advance i past the collapsed subtree.
+		    end_collapse = TreeCanvas.lapse.
+			getCollapsedEnd(leaf, super.sparse);
+		    i = end_collapse;
+		    continue tree_loop; }
+		else {
+		    x_start = oneLeaf(leaf, x_start, y_start); }}}
+	for (k = super.getMaxDepth(); k >= 0; k --) {
+	    y_start = y_start - lengthPerFont(super.Y_DIFF); 
+	    subBottomCollapse(k, y_start); }
+	//	super.PrintToSystemErr();
+	adjustLeavesCollapse();
+    }
+
+    private int setCollapsedLeaves(int i, int x_start, int y_start) {
+	int coll_x_start, coll_x_end, coll_y_start, coll_y_end;
+	int k, j, coll_max_x;
+	Node leaf, coll_root;
+	GraphicNode gleaf;
+	Vector leaves, arrange, gleaves;
+
+	leaves = TreeCanvas.lapse.getCollapsedLeaves(i, super.sparse);
+	coll_root = TreeCanvas.lapse.getCollRoot(leaves, super.sparse);
+	coll_max_x = x_start + lengthPerFont(super.X_DIFF);
+	coll_x_end = coll_max_x;
+	coll_y_start = y_start-(lengthPerFont(2)*(leaves.size()-1));
+	for (j = 0; j < leaves.size(); j++) {
+	    leaf = (Node)leaves.elementAt(j);
+	    super.setMaxDepth(leaf);
+	    coll_x_end = myXEnd(leaf, x_start);
+	    coll_x_start = x_start;
+	    if (coll_x_end > coll_max_x) {
+		coll_max_x = coll_x_end; }
+	    coll_y_end = coll_y_start - super.FONT_SZ;
+	    gleaf = new GraphicNode(leaf, coll_x_start, coll_max_x, 
+					coll_y_start, coll_y_end);
+	    super.addGraphicNode(gleaf); 
+	    //gleaf.PrintToSystemErr();
+	    coll_y_start += lengthPerFont(1) + super.Y_DIFF;
+	}		    
+	return coll_max_x; }
+
+    private void bottomUp () {
+	int i, k, x_start, y_start;
+	Node leaf;
+
+	y_start = super.MIN_HT - lengthPerFont(super.Y_DIFF); 
+	// first, draw text leaves of tree.
+	x_start = 10;
+	for (i = 0; i < super.sparse.size(); i++) {
+	    leaf = super.sparse.NodeAt(i);
+	    if (super.sparse.IsLeafText(leaf)) {
+		try {
+		    super.setMaxDepth(leaf); }
+		catch (Exception NullPointerException) {
+		    super.Init();
+		    super.setMaxDepth(leaf);
+		    return; }
+		x_start = oneLeaf(leaf, x_start, y_start); }}
+	for (k = super.getMaxDepth(); k >= 0; k --) {
+	    y_start = y_start - lengthPerFont(super.Y_DIFF);
+	    subBottom(k, y_start); }
+	//	super.PrintToSystemErr();
+	adjustLeaves();
+    }
+	    
+    private int oneLeaf(Node leaf, int x_start, int y_start) {
+	int new_x_start, x_end, y_end; 
+	GraphicNode gleaf;
+
+	y_end = y_start - super.FONT_SZ;
+	x_end = myXEnd(leaf, x_start);
+	gleaf = new GraphicNode(leaf, x_start, x_end, y_start, y_end);
+	super.addGraphicNode(gleaf); 
+	new_x_start = x_end + lengthPerFont(super.X_DIFF); 
+	return new_x_start; }
+
+    private int myXEnd(Node leaf, int x_start) {
+	if (super.justInits()) {
+	    return (x_start + lengthPerFont(2)); }
+	return (x_start + lengthPerFont(leaf.getLabel())); }
+
+    private void adjustLeavesCollapse() {
+	GraphicNode gnode;
+	Node nodal;
+	int advance, i;
+
+	tree_loop: for (i = 0; i < super.size(); i++) {
+	    gnode = super.graphicNodeAt(i);
+	    nodal = gnode.getNode();
+	    if (super.sparse.IsLeafText(nodal)) {
+		if (TreeCanvas.lapse.isCollapsed(i)) {
+		    advance = adjustCollBlock(i);
+		    i = advance;
+		    continue tree_loop; }
+		adjustOneLeaf(gnode, nodal);
+	    } }
+	return; }
+	
+    private int adjustCollBlock(int i) {
+	Vector leaves;
+	int j, diff, advance;
+	Node first, last, leaf, coll_root;
+	GraphicNode gfirst, gleaf, groot;
+
+	leaves = TreeCanvas.lapse.getCollapsedLeaves(i, super.sparse);
+	first = (Node)leaves.firstElement();
+	gfirst = super.graphicNodeFor(first);
+	coll_root = TreeCanvas.lapse.getCollRoot(leaves);
+	groot = super.graphicNodeFor(coll_root);
+	diff = gfirst.getYStart();
+	gfirst.setYs(groot.getYStart() + lengthPerFont(super.Y_DIFF),
+		     groot.getYEnd() + lengthPerFont(super.Y_DIFF)); 
+	diff -= (groot.getYStart() + lengthPerFont(super.Y_DIFF));
+	for (j = 1; j < leaves.size(); j++) {
+	    leaf = (Node)leaves.elementAt(j);
+	    gleaf = super.graphicNodeFor(leaf);
+	    gleaf.setYs(gleaf.getYStart() - diff, gleaf.getYEnd() - diff);
+	    //gleaf.PrintToSystemErr();
+	}
+	last = (Node)leaves.lastElement();
+	advance = last.getIndex_int();
+	return (advance + 1); }
+
+    private void adjustLeaves() {
+	GraphicNode gnode;
+	Node nodal;
+
+	for (int i = 0; i < super.size(); i++) {
+	    gnode = super.graphicNodeAt(i);
+	    nodal = gnode.getNode();
+	    if (super.sparse.IsLeafText(nodal)) {
+		adjustOneLeaf(gnode, nodal); }}
+	return; }
+
+    private void adjustOneLeaf(Node nodal) {
+	GraphicNode gnode;
+	gnode = super.graphicNodeFor(nodal);
+	adjustOneLeaf(gnode, nodal); }
+
+    private void adjustOneLeaf(GraphicNode gnode, Node nodal) {
+	GraphicNode gmom;
+	Node mom;
+
+	mom = super.sparse.GetMother(nodal);
+	gmom = super.graphicNodeFor(mom);
+	gnode.setYs(gmom.getYStart() + lengthPerFont(super.Y_DIFF),
+		    gmom.getYEnd() + lengthPerFont(super.Y_DIFF)); }
+
+    private void subBottom(int depth, int y_start) {
+	int i;
+	Node depth_node = new Node("NULL");
+	Vector layer;
+
+	layer = super.sparse.getAllNodesforDepth(depth);
+	layer_loop: for (i = 0; i < layer.size(); i++) {
+	    depth_node = (Node)layer.elementAt(i); 
+	    if (super.sparse.IsLeafText(depth_node)) {
+		continue layer_loop; }
+	    setSynNode(depth_node, y_start); } }
+
+    private void setSynNode(Node depth_node, int y_start) {
+	GraphicNode gnode1, gnode2, gmom;
+	Node first_kid, last_kid;
+	Vector depth_daughters;
+
+	depth_daughters = super.sparse.GetDaughters(depth_node);
+	first_kid = (Node)depth_daughters.firstElement();
+	last_kid = (Node)depth_daughters.lastElement();
+	gmom = new GraphicNode(depth_node, y_start, 
+			       y_start - super.FONT_SZ);
+	gnode1 = super.getGNode(first_kid);
+	gnode2 = super.getGNode(last_kid);
+	setXandY(gmom, gnode1, gnode2, y_start);
+	super.addGraphicNode(gmom); }
+
+    private void setSynNodeCollapse (Node depth_node, int y_start) {
+	GraphicNode gnode1, gmom;
+	Node first_kid;
+	Vector depth_daughters;
+
+	depth_daughters = super.sparse.getText(depth_node);
+	first_kid = (Node)depth_daughters.firstElement();
+	gmom = new GraphicNode(depth_node, y_start, 
+			       y_start - super.FONT_SZ);
+	gnode1 = super.getGNode(first_kid);
+	setXandY(gmom, gnode1, gnode1, y_start);
+	super.addGraphicNode(gmom); }
+
+    private void subBottomCollapse(int depth, int y_start) {
+	int i, j, k, y_end;
+	GraphicNode gnode1,gnode2, gmom;
+	Node first_kid, last_kid, depth_node = new Node("NULL");
+	Vector layer, depth_daughters;
+
+	y_end = y_start - super.FONT_SZ;
+	layer = super.sparse.getAllNodesforDepth(depth);
+	layer_loop: for (i = 0; i < layer.size(); i++) {
+	    depth_node = (Node)layer.elementAt(i);
+	    // is depth_node the root of a collapsed subtree?
+	    if (TreeCanvas.lapse.isCollapseSubRoot(depth_node, super.sparse)) {
+		setSynNodeCollapse(depth_node, y_start);
+		continue layer_loop; }
+	    if (super.sparse.IsLeafText(depth_node) || 
+		TreeCanvas.lapse.isCollapsed(depth_node.getIndex_int())) { 
+		continue layer_loop; }
+	    setSynNode(depth_node, y_start);
+	}
+    }
+
+    private void setXandY(GraphicNode gmom, GraphicNode gnode1, 
+			  GraphicNode gnode2, int y_start) {
+	int x_start1, x_end2, x_start_mom, x_end_mom, half;
+
+	x_start1 = gnode1.getXStart();
+	x_end2 = gnode2.getXEnd();
+	half = lengthPerFont(gmom.getLabel())/2;
+	x_start_mom = (x_start1 + x_end2)/2 - half;
+	x_end_mom = x_start_mom + lengthPerFont(gmom.getLabel() + "  ");
+	gmom.setXs(x_start_mom, x_end_mom);
+	gmom.setYs(y_start, y_start - super.FONT_SZ);
+    }
+
+    protected void setHighlights() {               
+	int i;
+	GraphicNode gnode;
+
+	if (!super.has_indices) { return; }
+
+	nodes_loop: for (i = 0; i < super.size(); i++) {
+	    gnode = super.graphicNodeAt(i);
+	    if (super.inHighNodes(gnode.getNode())) {
+		gnode.setHighlight1(true);
+		continue nodes_loop; }
+	    if (super.inHighBounds(gnode.getNode())) {
+		gnode.setHighlight2(true); } }
+	return;
+    }
+
+    protected int lengthPerFont (String label) {
+	return ((label.length())*(super.FONT_SZ/2)); }
+
+    protected int lengthPerFont (int x) {
+	return ((x*super.FONT_SZ)/2); }
+
+    protected int getMiddleX(GraphicNode gnode) {
+ 	int midx = 0;
+
+ 	midx = gnode.getXStart();
+ 	try {
+ 	    midx += lengthPerFont(gnode.getLabel())/2; }
+ 	catch (NullPointerException npe) {
+ 	    gnode.PrintToSystemErr(); }
+ 	return midx; }
+
+
+}

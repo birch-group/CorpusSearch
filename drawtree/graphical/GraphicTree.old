@@ -1,0 +1,707 @@
+package drawtree;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import syntree.*;
+import search_result.*;
+
+public class GraphicTree extends CorpusDraw {
+
+    protected ChangeTree sparse;
+    protected Stack selected, undoing, redoing;
+    protected Vector tree_list, high_bounds, high_nodes;
+    protected ActionRecord actor;
+    protected SentenceResult indices;
+    protected boolean has_indices = false, just_inits;
+    protected Node bullet_node; // node to put a bullet by.
+    protected int max_depth, X_DIFF, Y_DIFF, opt_height, opt_width;
+    protected int MIN_HT, MIN_WDTH, FONT_SZ = 12;
+    protected int word_scroll_ht, word_scroll_wdth; 
+
+    public GraphicTree() { Init(); }
+
+    public GraphicTree(ChangeTree in_sparse) {
+	Init(in_sparse); }
+
+    public GraphicTree(ChangeTree ct, SentenceResult dices) {
+	Init(ct, dices); }
+
+    public void Init(ChangeTree in_sparse, SentenceResult dices) {
+	this.setIndices(dices);
+	Init(in_sparse); }
+
+    public void Init(ChangeTree in_sparse) {
+	this.sparse = in_sparse;
+	Init(); }
+    
+    public void Init() {
+ 	tree_list = new Vector();
+        selected = new Stack();
+ 	undoing = new Stack();
+	redoing = new Stack();
+	setBulletNode();
+        max_depth = 0;
+        X_DIFF = 4; Y_DIFF = 6; 
+        just_inits = false;
+	MIN_HT = CorpusDraw.MIN_HT;
+	MIN_WDTH = CorpusDraw.MIN_WDTH;
+        opt_height = MIN_HT;
+        opt_width = MIN_WDTH; }
+
+    public void partInit() {
+ 	tree_list = new Vector();
+        selected = new Stack();
+ 	//undoing = new Stack();
+	//redoing = new Stack();
+	setBulletNode();
+        max_depth = 0;
+        X_DIFF = 4; Y_DIFF = 6; 
+        just_inits = false;
+	MIN_HT = CorpusDraw.MIN_HT;
+	MIN_WDTH = CorpusDraw.MIN_WDTH;
+        opt_height = MIN_HT;
+        opt_width = MIN_WDTH; }
+
+    public void shrink() {
+	if (this.X_DIFF > 0) {
+	    X_DIFF -= 1; 
+	    if (this.X_DIFF == 0) {
+		just_inits = true;} }
+	if (this.Y_DIFF > 3) {
+	    Y_DIFF -= 1; } }
+
+    public void swell() {
+	X_DIFF += 1;
+	if (X_DIFF > 0) { just_inits = false; }
+	Y_DIFF += 1; }
+
+    public int get_X_DIFF() {
+	return X_DIFF; }
+
+    public int get_Y_DIFF() {
+	return Y_DIFF; }
+
+    public boolean justInits() {
+	return just_inits; }
+			       
+    public void resetHeight() {
+	GraphicNode gnode, groot;
+	Node root;
+	int factor, root_end, new_y_start, new_y_end;
+
+	root = sparse.getRootNode();
+	groot = this.graphicNodeFor(root);
+	root_end = groot.getYEnd();
+	this.opt_width = this.calcOptWidth();
+	this.opt_height = this.calcOptHeight();
+	if (root_end > 0) { 
+	    return; }
+	// root_start is guaranteed to be <= 0.
+	factor = 0 - root_end + 10;
+	for (int i = 0; i < this.size(); i ++) {
+	    gnode = this.graphicNodeAt(i);
+	    new_y_start = gnode.getYStart() + factor;
+	    gnode.setYStart(new_y_start);
+	    new_y_end = gnode.getYEnd() + factor;
+	    gnode.setYEnd(new_y_end); }
+    }
+
+
+    private int calcOptHeight() {
+	GraphicNode groot, gnode;
+	Node root;
+	int max_y = 0, root_y, j, my_ht;
+
+	root = sparse.getRootNode();
+	groot = this.graphicNodeFor(root);
+	root_y = groot.getYEnd();
+	for (j = 0; j < this.size(); j++) {
+	    gnode = this.graphicNodeAt(j);
+	    if (gnode.getYStart() > max_y) {
+		max_y = gnode.getYStart(); } }
+	//my_ht = max_y - root_y;
+	my_ht = max_y; 
+	if (root_y < 0) {
+	    my_ht -= root_y; }
+	my_ht += 100;
+	if (my_ht < MIN_HT) { return MIN_HT; }
+	return my_ht;
+    }
+    
+    private int calcOptWidth() {
+	GraphicNode glast;
+	int last_x;
+
+	glast = this.graphicNodeAt(this.size() - 1);
+	last_x = glast.getXEnd() + 20;
+	if (last_x < MIN_WDTH) { return MIN_WDTH; }
+	return last_x;
+    }
+
+    public int getOptHeight() {
+	return this.opt_height; }
+
+    public int getOptWidth() {
+	return this.opt_width; }
+
+    public int getScrollHt() {
+	GraphicNode groot;
+	Node root;
+	int scroll_height, frame_height;
+
+	root = sparse.getRootNode();
+	groot = this.graphicNodeFor(root);
+	scroll_height = groot.getYStart();
+	scroll_height -= 2*FONT_SZ;
+	frame_height = CorpusDraw.toole.getFrameHt();
+	if (scroll_height - 2*FONT_SZ > frame_height) {
+	    shiftUp(groot.getYStart() - 4*FONT_SZ);
+	    scroll_height = 2*FONT_SZ; }
+	if (scroll_height < 0) { scroll_height = 0; }
+	return scroll_height; }
+
+    protected void shiftUp(int factor) {
+	shiftUp(0, factor); }
+
+    protected void shiftUp(int from_where, int factor) {
+	GraphicNode gnode;
+
+	for (int i = from_where; i < this.size(); i ++) {
+	    gnode = this.graphicNodeAt(i);
+	    gnode.shiftUp(factor); } }
+
+    protected void shiftDown(int factor) {
+	shiftUp(0, factor); }
+
+    protected void shiftDown(int from_where, int factor) {
+	GraphicNode gnode;
+	
+	for (int i = from_where; i < this.size(); i ++) {
+	    gnode = this.graphicNodeAt(i);
+	    gnode.shiftDown(factor); } }
+
+    protected void shiftDownSubtree(Node sub_root, int factor) {
+	shiftDownSubtree(sub_root.getIndex_int(), factor); }
+
+    protected void shiftDownSubtree(int dex, int factor) {
+	int i;
+	Node descend;
+	GraphicNode gdescend;
+	Vector descendants;
+
+	gdescend = this.graphicNodeAt(dex);
+	gdescend.shiftDown(factor);
+	descendants = sparse.GetDescendants(dex);
+	for (i = 0; i < descendants.size(); i++) {
+	    descend = (Node)descendants.elementAt(i);
+	    gdescend = this.graphicNodeFor(descend);
+	    gdescend.shiftDown(factor); }}
+
+    protected void shiftDown(int from_where, int to_where, int factor) {
+	int i;
+	GraphicNode gnode;
+
+	for (i = from_where; i < to_where; i++) {
+	    gnode = this.graphicNodeAt(i);
+	    gnode.shiftDown(factor); } }
+
+    protected void shiftRight(int factor) {
+	shiftRight(0, factor); }
+
+    protected void shiftRight(int from_where, int factor) {
+	int i;
+	GraphicNode gnode;
+
+	for (i = from_where; i < this.size(); i ++) {
+	    gnode = this.graphicNodeAt(i);
+	    gnode.shiftRight(factor); } }
+
+    protected void shiftLeft(int factor) {
+	shiftLeft(0, factor); }
+
+    protected void shiftLeft(int from_where, int factor) {
+	shiftLeft(from_where, this.size(), factor); }
+
+    protected void shiftLeft(int from_where, int to_where, int factor) {
+	int i;
+	GraphicNode gnode;
+
+	for (i = from_where; i < to_where; i ++) {
+	    gnode = this.graphicNodeAt(i);
+	    gnode.shiftLeft(factor); } }
+
+    protected void shiftLeftSubtree(int from_where, int factor) {
+	int i, last_dex;
+	GraphicNode gnode;
+	Node sub_root, last;
+
+	sub_root = sparse.NodeAt(from_where);
+	last = sparse.LastDaughter(sub_root);
+	last_dex = last.getIndex_int();
+	shiftLeft(from_where, last_dex + 1, factor); }
+
+    public int getScrollWidth() {
+	GraphicNode groot;
+	Node root;
+	int scroll_width, factor;
+
+	root = sparse.getRootNode();
+	groot = this.graphicNodeFor(root);
+	factor = CorpusDraw.toole.getFrameWdth()/2;
+	scroll_width = groot.getXStart();
+	scroll_width -= factor;
+	if (scroll_width < 0) { 
+	    shiftRight(factor); 
+	    scroll_width += CorpusDraw.toole.getFrameWdth()/2; } 
+	return (scroll_width); }
+
+
+    public GraphicNode gNodeForWordDex(int word_dex, String select_word) {
+	Node text_node;
+	GraphicNode text_gnode; 
+
+
+	if (word_dex < 0) { word_dex = 0; }
+	text_node = correctNode(word_dex, select_word);
+	text_gnode = this.graphicNodeFor(text_node);
+	return text_gnode; }
+
+    private Node correctNode(int word_dex, String select_word) {
+	Vector scroll_nodes;
+	Node text_node;
+	int j;
+
+	scroll_nodes = MyEvents.urt.toScrollVec(sparse);
+	text_node = (Node)scroll_nodes.elementAt(word_dex);
+	for (j = word_dex; j < scroll_nodes.size(); j++) {
+	    text_node = (Node)scroll_nodes.elementAt(j);
+	    if (text_node.getLabel().equals(select_word.trim())) {
+		return text_node; } }
+	return((Node)scroll_nodes.elementAt(word_dex)); }
+
+    public Node setScrollWordDex(int word_dex, String select_word) {
+	GraphicNode gnode;
+
+	gnode = gNodeForWordDex(word_dex, select_word);
+	return(setScrollWordDex(gnode)); }
+
+    public Node setScrollWordDex(GraphicNode gnode) {
+	word_scroll_ht = gnode.getYEnd();
+	word_scroll_ht -= CorpusDraw.toole.getFrameHt()/2;
+	//word_scroll_ht += 22;
+	//System.err.println("word_scroll_ht:  " + word_scroll_ht);
+	//if (word_scroll_ht >= 110) {
+	//  word_scroll_ht -= 100; }
+	word_scroll_wdth = gnode.getXStart() - 4*FONT_SZ;
+	word_scroll_wdth -= CorpusDraw.toole.getFrameWdth()/2;
+	if (word_scroll_wdth < 0) {
+	    word_scroll_wdth = 0; }
+	return(gnode.getNode()); }
+
+    public int getWordScrollHt() {
+	return word_scroll_ht; }
+
+    public int getWordScrollWdth() {
+	return word_scroll_wdth; }
+
+    public void decNumID() {
+	sparse.setNumID(sparse.getNumID() - 1); }
+
+    public void setNumID(int dex) {
+	sparse.setNumID(dex); }
+
+    public int getNumID() {
+	return sparse.getNumID(); }
+
+    public boolean selectIsEmpty() {
+	return (selected.isEmpty()); }
+
+    public void setBulletNode() {
+	try {
+	    if (has_indices) {
+		bullet_node = (Node)high_bounds.firstElement();
+		return; }
+	    bullet_node = this.sparse.getRootNode(); }
+        catch (Exception e) {
+	    bullet_node = new Node("NULL"); }
+	finally {
+	    //System.err.println("bullet_node:  " + bullet_node.toString());
+	    return; } }
+
+    public void setBulletNode(Node nodal) {
+	this.bullet_node = nodal;
+        return; }
+
+    public Node getBulletNode() {
+	return this.bullet_node; }
+
+    public GraphicNode getGraphicBulletNode() {
+	return (this.graphicNodeFor(this.bullet_node)); }
+
+    public boolean getsBullet(GraphicNode gnode) {
+	return (getsBullet(gnode.getNode()));  }
+
+    public boolean getsBullet(Node nodal) {
+	return (this.bullet_node.equals(nodal)); }
+
+    public void moveBulletDown() {
+	Vector daughters;
+	int middle;
+
+	daughters = sparse.GetDaughters(this.bullet_node);
+	if (daughters.isEmpty()) { return; }
+	if (daughters.size() == 1) {
+	    this.bullet_node = (Node)daughters.firstElement(); return; }
+	middle = daughters.size()/2;
+	this.bullet_node = (Node)daughters.elementAt(middle); }
+
+    public void moveBulletUp() {
+	Node mother;
+
+	if (this.bullet_node.equals(sparse.getRootNode())) {
+	    return; }
+	mother = sparse.GetMother(this.bullet_node);
+	if (!mother.IsNullNode()) {
+	    this.bullet_node = mother; } }
+
+    public void moveBulletRight() {
+	Vector y_vector;
+	int i;
+	GraphicNode gnode;
+
+	y_vector = this.getNodesforYStart(this.bullet_node);
+	for (i = 0; i < y_vector.size(); i++) {
+	    gnode = (GraphicNode)y_vector.elementAt(i);
+	    if (gnode.getNode().equals(this.bullet_node)) {
+		if (i == y_vector.size() - 1) { return; }
+		gnode = (GraphicNode)y_vector.elementAt(i + 1);
+		this.bullet_node = gnode.getNode();
+		return; } }
+	return; }
+
+    public void moveBulletLeft() {
+	Vector y_vector;
+	int i;
+	GraphicNode gnode;
+
+	y_vector = this.getNodesforYStart(this.bullet_node);
+	for (i = 0; i < y_vector.size(); i++) {
+	    gnode = (GraphicNode)y_vector.elementAt(i);
+	    if (gnode.getNode().equals(this.bullet_node)) {
+		if (i == 0) { return; }
+		gnode = (GraphicNode)y_vector.elementAt(i - 1);
+		this.bullet_node = gnode.getNode();
+		return; } }
+	return; }
+
+    public Vector getNodesforYStart(Node nodal) {
+	return (getNodesforYStart(this.graphicNodeFor(nodal))); }
+
+    public Vector getNodesforYStart(GraphicNode gnode) {
+	return (getNodesforYStart(gnode.getYStart())); }
+
+    public Vector getNodesforYStart(int y_start) {
+	GraphicNode gnoid;
+	Vector y_nodes = new Vector();
+
+	for (int i = 0; i < this.size(); i++) {
+	    gnoid = this.graphicNodeAt(i);
+	    if (gnoid.getYStart() == y_start) {
+		y_nodes.addElement(gnoid); }}
+	return y_nodes; }
+
+    public boolean isEmpty() {
+	return (tree_list.isEmpty()); }
+
+    public void setIndices(SentenceResult dices) {
+	if (dices.isEmpty()) { return; }
+	this.indices = dices; 
+        this.has_indices = true; 
+        this.high_bounds = dices.getBoundList(); 
+        this.high_nodes = dices.getNodeList(); }
+    //        setBulletNode((Node)high_bounds.firstElement()); } 
+
+    public void updateIndices() {
+	if (!has_indices) { return; }
+	this.indices.update(this.sparse);
+	this.high_bounds = this.indices.getBoundList();
+	this.high_nodes = this.indices.getNodeList(); }
+    //        setBulletNode((Node)high_bounds.firstElement()); }
+
+    public boolean inHighBounds(Node nodal) {
+	return(this.inList(this.high_bounds, nodal)); }
+
+    public boolean inHighNodes(Node nodal) {
+	return(this.inList(this.high_nodes, nodal)); }
+
+    public boolean inList(Vector listt, Node nodal) {
+	Node old_node;
+
+	for (int i = 0; i < listt.size(); i++) {
+	    old_node = (Node)listt.elementAt(i);
+	    if (old_node.equals(nodal)) {
+		return true; } }
+	return false; }
+
+    public SentenceResult getIndices() {
+	return this.indices; }
+
+    public boolean hasIndices() {
+	return has_indices; }
+
+    public String getShortFileName() {
+	String short_name, gt_file_name;
+	int last_dex;
+
+	try {
+	gt_file_name = sparse.getFileName();
+	last_dex = gt_file_name.lastIndexOf("/");
+	if (last_dex < 0 ) {
+	    return gt_file_name; }
+	short_name = gt_file_name.substring(last_dex + 1); }
+	catch (Exception e) { short_name = "NO_FILE_NAME_FOUND"; }
+	return short_name; }
+
+    public String getFileName() {
+	return sparse.getFileName(); }
+
+    public void setFileName(String fname) {
+	sparse.setFileName(fname);
+	return; }
+
+    public GraphicNode graphicNodeFor(Node nodal) {
+	return (this.graphicNodeAt(nodal.getIndex())); }
+  
+    public GraphicNode graphicNodeAt(Integer dex) {
+	return (this.graphicNodeAt(dex.intValue())); }
+
+    public GraphicNode graphicNodeAt(int i) {
+ 	return ((GraphicNode)tree_list.elementAt(i)); }
+
+    public Node NodeAt(int i) {
+	GraphicNode gn = this.graphicNodeAt(i);
+	return(gn.getNode()); }
+
+    public boolean IsLeafText(Node noid) {
+	return(this.sparse.IsLeafText(noid)); }
+
+    public void reset() {
+	this.sparse.changesInit();
+	tree_list.removeAllElements();
+	selected = new Stack(); }
+
+    public void removeAllElements() {
+	tree_list.removeAllElements();
+	this.sparse.removeAllElements();
+	selected.removeAllElements();
+	undoing.removeAllElements();
+	redoing.removeAllElements();
+	has_indices = false;
+	max_depth = 0; }
+
+    public void setMaxDepth(int depth) {
+ 	if (depth > max_depth) {
+ 	    max_depth = depth; } }
+
+    public void setMaxDepth(Node leaf) {
+ 	int depth = this.sparse.getDepth(leaf);
+ 	setMaxDepth(depth); }
+
+    public int getMaxDepth() {
+ 	return max_depth; }
+
+    public void addGraphicNode(GraphicNode gnode) {
+	int dex, i;
+	GraphicNode new_gnode;
+
+	dex = gnode.getNode().getIndex_int();
+	if (dex >= tree_list.size()) {
+	    for (i = tree_list.size(); i <= dex; i++) {
+		new_gnode = new GraphicNode("NULL"); 
+		this.tree_list.addElement(new_gnode); }}
+	this.tree_list.setElementAt(gnode, dex); }
+	
+    public ChangeTree getChangeTree() {
+ 	return sparse; }
+
+    public void addToSelected(GraphicNode gnode) {
+ 	selected.push(gnode); }
+
+    public void clearSelected() {
+	int i;
+	GraphicNode gnode;
+
+ 	selected.removeAllElements();
+        for (i = 0; i < this.size(); i++) {
+	    gnode = this.graphicNodeAt(i);
+	    gnode.selectOff(); } }
+
+    public GraphicNode getSelected() {
+ 	if (selected.isEmpty()) {
+ 	    return (new GraphicNode("NULL")); }
+ 	return((GraphicNode)selected.pop()); }
+
+    public void setHighlight1(Node nodal) {
+	GraphicNode gnode;
+
+	gnode = this.graphicNodeAt(nodal.getIndex()); 
+	gnode.setHighlight1(true); }
+
+    public void setHighlight2(Node nodal) {
+	GraphicNode gnode;
+
+	gnode = this.graphicNodeAt(nodal.getIndex()); 
+	gnode.setHighlight2(true); }
+
+    public int size() {
+ 	return tree_list.size(); }
+
+    public GraphicNode getNodeforCoords(int x, int y) {
+ 	GraphicNode gnode;
+ 	int i;
+
+ 	for (i = 0; i < tree_list.size(); i++) {
+	    gnode = this.graphicNodeAt(i);
+	    if (gnode.containsCoords(x, y)) {
+		return gnode; } }
+	gnode = new GraphicNode("NULL");
+	return gnode; 
+    }
+
+    public GraphicNode getGNode(Node nodal) {
+	int dex;
+
+	dex = nodal.getIndex_int();
+	return(this.graphicNodeAt(dex)); }
+
+    public void OKShiftLeft(int dex, int proposed) {
+	int corrected, behind, i;
+
+	corrected = proposed;
+	after_loop:  for (i = dex + 1; i < sparse.size(); i++) {
+	    behind = xSpaceBehind(i, dex);
+	    if (behind < 0) { continue after_loop; }
+	    if (corrected > behind) {
+		corrected = behind ; }}
+	    this.shiftLeft(dex, corrected); 
+	return; }
+	
+    public int lastDexSubtree(int dex) {
+	int i, last_dex = dex;
+	Vector descendants;
+	GraphicNode gnode;
+	Node nodal;
+
+	descendants = this.sparse.GetDescendants(dex);
+	if (descendants.size() == 0) { return dex; }
+	nodal = (Node)descendants.lastElement();
+	return (nodal.getIndex_int()); }
+
+    
+    public int xSpaceTwoSubtrees(Node prev_root, Node follow_root) {
+	return (xSpaceTwoSubtrees(prev_root.getIndex_int(),
+				  follow_root.getIndex_int())); }
+
+
+    public int xSpaceTwoSubtrees(int prev_root, int follow_root) {
+	int i, between = 50000, compare = 60000;
+	Vector follow_descend;
+	Node nodal;
+
+	follow_descend = this.sparse.GetDescendants(follow_root);
+	for (i = 0; i < follow_descend.size(); i++) {
+	    nodal = (Node)follow_descend.elementAt(i);
+    	    compare = xSpaceNodeSubtree(nodal.getIndex_int(), prev_root);
+	    if (compare < between) { between = compare; }}
+	return between; }
+
+    public int xSpaceNodeSubtree(int node_dex, int subtree_dex) {
+	int i, curr_x_start, diff_x_end, behind = 0; 
+	GraphicNode curr_gnode, diff_gnode;
+	Node diff_node;
+	Vector descendants;
+
+	
+	curr_gnode = this.graphicNodeAt(node_dex);
+	curr_x_start = curr_gnode.getXStart();
+	descendants = this.sparse.GetDescendants(subtree_dex);
+	for (i = 0; i < descendants.size(); i++) {
+	    diff_node = (Node)descendants.elementAt(i);
+	    diff_gnode = this.graphicNodeAt(diff_node.getIndex_int());
+	    if (diff_gnode.sameY(curr_gnode)) {
+		diff_x_end = diff_gnode.getXEnd();
+		behind = curr_x_start - diff_x_end;
+		return behind; }}
+	return 50000; }
+
+    // finds minimal space behind subtree.
+    public int xSpaceBehindSubtree(int dex) {
+	int i, behind = 0, other_behind = 0;
+	Vector descendants;
+
+	behind = this.xSpaceBehind(dex);
+	descendants = this.sparse.GetDescendants(dex);
+	for (i = 0; i < descendants.size(); i++) {
+	    other_behind = xSpaceBehind((Node)descendants.elementAt(i)); 
+	    if (other_behind < behind) {
+		behind = other_behind; } }
+	return behind; }
+
+    public int xSpaceBehind(Node nodal) {
+	int dex = nodal.getIndex_int();
+	return (xSpaceBehind(dex, dex)); }
+
+    public int xSpaceBehind(int dex) {
+	return (xSpaceBehind(dex, dex)); }
+
+    public int xSpaceBehind(int dex, int before) {
+	int i, curr_x_start, diff_x_end, behind = 0; 
+	GraphicNode curr_gnode, diff_gnode;
+
+	if (dex == 0) { return 0; }
+	curr_gnode = this.graphicNodeAt(dex);
+	curr_x_start = curr_gnode.getXStart();
+	for (i = before - 1; i > 0; i--) {
+	    diff_gnode = this.graphicNodeAt(i);
+	    if (diff_gnode.sameY(curr_gnode)) {
+		diff_x_end = diff_gnode.getXEnd();
+		behind = curr_x_start - diff_x_end;
+		return behind; }}
+	return behind; }
+		
+    
+    protected void correctRoot(Node first_daughter, Node last_daughter) {
+	GraphicNode gfirst, glast, groot;
+	int new_x_start;
+
+	gfirst = this.graphicNodeFor(first_daughter);
+	glast = this.graphicNodeFor(last_daughter);
+	new_x_start = (gfirst.getXStart() + glast.getXStart())/2;
+	groot = this.graphicNodeFor(sparse.getRootNode());
+	groot.setXStart(new_x_start);
+	groot.setXEnd(new_x_start + X_DIFF*FONT_SZ/2); 
+    }
+
+    public void PrintHighNodes() {
+	Node nodal;
+	for (int i = 0; i < this.high_nodes.size(); i++) {
+	    nodal = (Node)high_nodes.elementAt(i);
+	    System.err.print(nodal.toString() + ", " ); }
+	System.err.println(""); }
+
+
+    public void PrintToSystemErr() {
+	PrintToSystemErr(0, this.size()); }
+
+    public void PrintToSystemErr(int start, int finish) {
+	GraphicNode gnode;
+
+	if (start < 0) { start = 0; }
+	if (finish > this.size()) {
+	    finish = this.size(); }
+	for (int i = start; i < finish; i++) {
+	    gnode = this.graphicNodeAt(i);
+	    gnode.PrintToSystemErr(); } }
+
+}

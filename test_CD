@@ -1,0 +1,6 @@
+#!/bin/sh
+cd ../../
+java -classpath /home/brandall/work/newCS/build/classes drawtree/CorpusDraw /home/brandall/ME/cmmalory.m4.psd
+
+
+

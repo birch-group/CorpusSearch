@@ -1,0 +1,174 @@
+package drawtree;
+
+import java.awt.*;
+import java.awt.event.*;
+import print.*;
+import syntree.*;
+
+
+public class MyDialog extends MyEvents {
+
+    public static boolean interrupt(String to_interrupt) {
+	boolean response;
+
+	if (bb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { bb.resetButton(); } 
+	    return response; } 
+	if (nb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { nb.resetButton(); } 
+	    return response; }
+	if (ub.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { ub.resetButton(); } 
+	    return response; }
+	if (rb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { rb.resetButton(); } 
+	    return response; }
+	if (db.getPressed()) { 
+	    response = myAlert(to_interrupt);
+	    if (!response) { db.resetButton(); } 
+	    return response; }
+	if (rlb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { rlb.resetButton(); } 
+	    return response; }
+	if (ainb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    System.err.println("in interrupt:  response:  " + response);
+	    if (!response) { ainb.resetButton(); } 
+	    return response; }
+	if (cib.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { cib.resetButton(); }
+	    return response; }
+	if (lbb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { lbb.resetButton(); } 
+	    return response; }
+	if (lab.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { lab.resetButton(); } 
+	    return response; }
+	if (mtb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { mtb.resetButton(); } 
+	    return response; }
+	if (mpb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { mpb.resetButton(); } 
+	    return response; }
+	if (mfb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { mfb.resetButton(); } 
+	    return response; }
+	if (sb.getPressed()) { 
+	    response = myAlert(to_interrupt);
+	    if (!response) { sb.resetButton(); } 
+	    return response; }
+	if (qfb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { qfb.resetButton(); } 
+	    return response; }
+	if (qb.getPressed()) { 
+	    response = myAlert(to_interrupt);
+	    if (!response) { qb.resetButton(); } 
+	    return response; }
+	if (sob.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { sob.resetButton(); } 
+	    return response; }
+	if (sab.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { sab.resetButton(); } 
+	    return response; }
+	if (solb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { solb.resetButton(); }
+	    return response; }
+    	if (cb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { cb.resetButton(); } 
+	    return response; }
+        if (eb.getPressed()) {
+	    response = myAlert(to_interrupt);
+	    if (!response) { eb.resetButton(); } 
+	    return response; }
+	if (eab.getPressed()) { 
+	    response = myAlert(to_interrupt);
+	    if (!response) { eab.resetButton(); } 
+	    return response; }
+	if (clb.getPressed()) { 
+	    response = myAlert(to_interrupt);
+	    if (!response) { clb.resetButton(); } 
+	    return response; }
+	return false;
+    }	
+
+    private static boolean myAlert(String to_interrupt) {
+	Dialog myDialog;
+	TextField alert_text;
+	GridBagConstraints alert_c;
+	GridBagLayout alert_gridbag, button_gridbag;
+	YesButton yesb;
+	NoMeButton nob;
+	Button blank = new Button("");
+	Panel button_panel;
+
+	alert_text = new TextField(50);
+	alert_text.setBackground(ToolColors.HIGHLIGHT1);
+	alert_text.setEditable(false);
+	myDialog = new Dialog(CorpusDraw.toole.getFrame(), "Interrupt");
+	myDialog.setBounds(10, 10, 300, 300);
+	myDialog.setBackground(ToolColors.HIGHLIGHT1);
+	blank.setBackground(ToolColors.HIGHLIGHT1);
+	//blank.setBorder(ToolColors.HIGHLIGHT1);
+	alert_c = new GridBagConstraints();
+	alert_gridbag = new GridBagLayout();
+	myDialog.setLayout(alert_gridbag);
+	alert_c.fill = GridBagConstraints.BOTH;
+	alert_c.gridx = 0; alert_c.gridy = 0;
+	myDialog.add(alert_text, alert_c);
+	button_gridbag = new GridBagLayout();
+	button_panel = new Panel(button_gridbag);
+	alert_c  = new GridBagConstraints();
+	alert_c.gridx = 0; alert_c.gridy = 0;
+	//alert_c.anchor = GridBagConstraints.LINE_START;
+	button_panel.add(blank, alert_c);
+	alert_c.gridx = 0; alert_c.gridy = 1;
+	yesb = new YesButton();
+	button_panel.add(yesb.getButton(), alert_c);
+	alert_c.gridx = 0; alert_c.gridy = 2;
+	blank = new Button();
+	blank.setBackground(ToolColors.HIGHLIGHT1);
+	button_panel.add(blank, alert_c);
+	alert_c.gridx =  0; alert_c.gridy = 3;
+	nob = new NoMeButton();
+	button_panel.add(nob.getButton(), alert_c);
+	alert_c.gridx = 0; alert_c.gridy = 1;
+	myDialog.add(button_panel, alert_c);
+
+
+
+	alert_text.setText("abandon " + to_interrupt + "?");
+	myDialog.show();
+	System.err.println("about to enter while loop:  ");
+	while(true) {
+	    if (nob.getPressed()) {
+		System.err.println("found no button pressed");
+		nob.resetButton();
+		System.err.println("will hide mydialog:  ");
+		myDialog.hide();
+		return false; }
+	    if (yesb.getPressed()) {
+		System.err.println("found yes button pressed");
+		yesb.resetButton();
+		System.err.println("will hide mydialog: ");
+		myDialog.hide();
+		return true; } }
+    }
+
+
+}

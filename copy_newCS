@@ -1,0 +1,53 @@
+#!/bin/sh
+mkdir CSParse
+cd CSParse
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/CSParse/*.java ./.
+cd ../
+mkdir command
+cd command
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/command/*.java ./.
+cd ../
+mkdir convert
+cd convert
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/convert/*.java ./.
+cd ../
+mkdir csearch
+cd csearch
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/csearch/*.java ./.
+cd ../
+mkdir io
+cd io
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/io/*.java ./.
+cd ../
+mkdir print
+cd print
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/print/*.java ./.
+cd ../
+mkdir search
+cd search
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/search/*.java ./.
+mkdir search_result
+cd search_result
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/search_result/*.java ./.
+cd ../
+mkdir stats
+cd stats
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/stats/*.java ./.
+cd ../
+mkdir stringfuss
+cd stringfuss
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/stringfuss/*.java ./.
+cd ../
+mkdir syntree
+cd syntree
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/syntree/*.java ./.
+cd ../
+mkdir test
+cd test
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/test/*.q ./.
+cd ../
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/compile ./.
+
+
+
+

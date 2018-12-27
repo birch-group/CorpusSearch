@@ -1,0 +1,15 @@
+#!/bin/sh
+cd CodingParse
+java -classpath ../javacc_4.0/javacc.jar javacc ParseCodingQuery.jj
+cd ../
+javac -classpath . CodingParse/ParseCodingQuery.java
+cd CSParse
+java -classpath ../javacc_4.0/javacc.jar javacc ParseQuery.jj
+cd ../
+javac -classpath . CSParse/ParseQuery.java
+#cd FramesParse
+#java -classpath ../javacc_4.0/javacc.jar javacc ParseFrames.jj
+#cd ../
+#javac -classpath . FramesParse/ParseFrames.java
+
+

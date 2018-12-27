@@ -1,0 +1,67 @@
+#!/bin/sh
+cd CodingParse
+rm *.class
+cd ../
+
+cd CSParse
+rm *.class
+cd ../
+
+cd FramesParse
+rm *.class
+cd ../
+
+cd basicinfo
+rm *.class
+cd ../
+
+cd coding
+rm *.class
+cd ../
+
+cd command
+rm *.class
+cd ../
+
+cd csearch
+rm *.class
+cd ../
+
+cd frames
+rm *.class
+cd ../
+
+cd io
+rm *.class
+cd ../
+
+cd lexicon
+rm *.class
+cd ../
+
+cd print
+rm *.class
+cd ../
+
+cd revise
+rm *.class
+cd ../
+
+cd search 
+rm *.class
+cd ../
+
+cd search_result
+rm *.class
+cd ../
+
+cd stats
+rm *.class
+cd ../
+
+
+cd syntree
+rm *.class
+cd ../
+
+

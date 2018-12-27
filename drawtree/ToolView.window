@@ -1,0 +1,296 @@
+package drawtree;
+
+import java.awt.*;
+import java.awt.event.*;
+import print.*;
+import syntree.*;
+import javax.swing.*;
+
+public class ToolView implements WindowListener {
+
+    private static Frame myFrame;
+    private static Graphics grappa;
+    private static GridBagConstraints c;    
+    private static GridBagLayout gridbag;
+    public static TreeView treeve;
+    private static Font fonto;
+    private Rectangle bounds;
+    private Panel function_panel, display_panel, text_panel;
+    private static UrText urt = new UrText();
+
+    public ToolView() {
+	try{
+	myFrame = new Frame ("CorpusDraw") ;
+	fonto = myFrame.getFont();
+	bounds = getVBounds();
+	//myFrame.setResizable(true);
+	c = new GridBagConstraints();
+	gridbag = new GridBagLayout();
+	myFrame.setLayout(gridbag);
+	c.fill = GridBagConstraints.BOTH;
+	GridBagLayout function_panelbag = new GridBagLayout();	
+	function_panel = new Panel(function_panelbag);
+
+	// back button.
+	MyEvents.bb = new BackButton();
+	c.weightx = 0.0; c.weighty = 0.0;
+	c.gridx = 0; c.gridy = 0;
+	function_panel.add(MyEvents.bb.getButton(), c);
+
+	// next button.
+	MyEvents.nb = new NextButton();
+	c.gridx = 1;
+	function_panel.add(MyEvents.nb.getButton(), c);
+
+	// undo button.
+	MyEvents.ub = new UndoButton();
+	c.gridx = 2;
+	function_panel.add(MyEvents.ub.getButton(), c);
+
+	// redo button.
+	MyEvents.rb = new RedoButton();
+	c.gridx = 3;
+	function_panel.add(MyEvents.rb.getButton(), c);
+
+	// replace label button.
+	MyEvents.rlb = new ReplaceLabelButton();
+	c.gridx = 4;
+	function_panel.add(MyEvents.rlb.getButton(), c);
+
+	// add internal node button.
+        MyEvents.ainb = new AddInternalNodeButton();
+	c.gridx = 5;
+	function_panel.add(MyEvents.ainb.getButton(), c);
+
+	// delete button.
+	MyEvents.db = new DeleteButton();
+	c.gridx = 6;
+	function_panel.add(MyEvents.db.getButton(),  c);
+
+	// move to button.
+	MyEvents.mtb = new MoveToButton();
+	c.gridx = 7;
+	function_panel.add(MyEvents.mtb.getButton(), c);
+
+	// coindex button.
+	MyEvents.cib = new CoIndexButton();
+	c.gridx = 8;
+	function_panel.add(MyEvents.cib.getButton(), c);
+
+	//leaf before button.
+	MyEvents.lbb = new LeafBeforeButton();
+	c.gridx = 9;
+	function_panel.add(MyEvents.lbb.getButton(), c);
+
+	//leaf after button.
+	MyEvents.lab = new LeafAfterButton();
+	c.gridx = 10;
+	function_panel.add(MyEvents.lab.getButton(), c);
+
+	// merge previous button.
+	MyEvents.mpb = new MergePreviousButton();
+	c.gridx = 11;
+	function_panel.add(MyEvents.mpb.getButton(), c);
+
+	// merge following button.
+	MyEvents.mfb = new MergeFollowingButton();
+	c.gridx = 12; 
+	function_panel.add(MyEvents.mfb.getButton(), c); 
+
+	// split button.
+	MyEvents.sb = new SplitButton();
+	c.gridx = 13;
+	function_panel.add(MyEvents.sb.getButton(), c);
+
+	// quit file button.	
+	MyEvents.qfb = new QuitFileButton();
+	c.gridx = 14;
+	function_panel.add(MyEvents.qfb.getButton(), c);
+
+	// quit button.
+	MyEvents.qb = new QuitMeButton();
+	c.gridx = 15;
+	function_panel.add(MyEvents.qb.getButton(), c);
+
+	// add function_panel to myFrame.
+	c.gridx = 0; c.gridy = 0;
+	myFrame.add(function_panel, c);
+
+	GridBagLayout text_panelbag = new GridBagLayout();	
+	text_panel = new Panel(text_panelbag);
+
+	c = new GridBagConstraints();
+	c.weightx = 0.0; c.weighty = 0.0;
+
+	// inputtext field.
+	c.gridx = 0; c.gridy = 0; 
+	MyEvents.intf = new InputTextField();
+	MyEvents.intf.setInputText("your input here");
+	MyEvents.intf.getTextField().setColumns(30);
+	text_panel.add(MyEvents.intf.getTextField(), c);
+
+	// blank button.
+	MyEvents.blb = new BlankButton();
+	c.gridx = 1;
+	text_panel.add(MyEvents.blb.getButton(), c);
+
+	// error text field.
+	c.gridx = 2; 
+	MyEvents.errtf = new ErrorMeTextField();
+	MyEvents.warn("error messages here");
+	MyEvents.errtf.getTextField().setColumns(40);
+	text_panel.add(MyEvents.errtf.getTextField(), c);
+
+	// blank button.
+	MyEvents.blb = new BlankButton();
+	c.gridx = 3;
+	text_panel.add(MyEvents.blb.getButton(), c);
+
+	// announce text field.
+	c.gridx = 4; c.gridy = 0; 
+	MyEvents.anntf = new AnnounceTextField();
+	MyEvents.anntf.put("file name");
+	MyEvents.anntf.getTextField().setColumns(20);
+	text_panel.add(MyEvents.anntf.getTextField(), c);
+
+	c.gridx = 0; c.gridy = 1;
+	myFrame.add(text_panel, c);
+
+	GridBagLayout display_panelbag = new GridBagLayout();	
+	display_panel = new Panel(display_panelbag);
+
+	c = new GridBagConstraints();
+	c.weightx = 0.0; c.weighty = 0.0;
+	c.fill = GridBagConstraints.BOTH;
+	// show only button.
+	c.gridx = 0; c.gridy = 0;
+	MyEvents.sob = new ShowOnlyButton();
+	display_panel.add(MyEvents.sob.getButton(), c);
+
+	// show all button
+	c.gridx = 1;
+	MyEvents.sab = new ShowAllButton();
+	display_panel.add(MyEvents.sab.getButton(), c);
+
+	// show only list button.
+	c.gridx = 2;
+	MyEvents.solb = new ShowOnlyListButton();
+	display_panel.add(MyEvents.solb.getButton(), c);
+
+	// collapse button.
+	c.gridx = 3;
+	MyEvents.cb = new CollapseButton();
+	display_panel.add(MyEvents.cb.getButton(), c);
+
+	// expand button.
+	c.gridx = 4;
+	MyEvents.eb = new ExpandButton();
+	display_panel.add(MyEvents.eb.getButton(), c);
+
+	// expand all button.
+	c.gridx = 5;
+	MyEvents.eab = new ExpandAllButton();
+	display_panel.add(MyEvents.eab.getButton(), c);
+
+	// collapse list button.
+	c.gridx = 6;
+	MyEvents.clb = new CollapseListButton();
+	display_panel.add(MyEvents.clb.getButton(), c);
+
+	// help button.
+	c.gridx = 7;
+	MyEvents.hb = new HelpButton();
+	display_panel.add(MyEvents.hb.getButton(), c);
+	
+	c.gridx = 0; c.gridy = 2;
+	myFrame.add(display_panel, c);
+
+	// urtext area.
+	c.gridx = 0; c.gridy = 3;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	MyEvents.urg = new UrTextArea();
+	MyEvents.urg.getTextArea().setRows(3);
+	myFrame.add(MyEvents.urg.getTextArea(), c);
+	// query field.
+
+	if (CorpusDraw.hasQuery()) {
+	    c.gridy = 4;
+	    MyEvents.qta = new QueryTextArea();
+	    MyEvents.qta.getTextArea().setRows(2);
+	    MyEvents.qta.put(CorpusDraw.query); 
+	    myFrame.add(MyEvents.qta.getTextArea(), c); }
+
+	// graphic tree window.
+	treeve = new TreeView();
+	c.gridx = 0; c.gridy = 4;
+	if (CorpusDraw.hasQuery()) {
+	    c.gridy = 5; }
+	c.weightx = 1.0; c.weighty = 1.0;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	myFrame.add(treeve.getScrollPane(), c);
+
+	myFrame.pack();
+	myFrame.setBackground(ToolColors.TOOL_BACKGROUND);
+	myFrame.addWindowListener(this);
+	myFrame.setSize(bounds.width, bounds.height);
+	myFrame.show();
+	}
+	catch (Exception e) {
+	    e.printStackTrace(); }
+    }
+
+    public void removeWindowListener() {
+	myFrame.removeWindowListener(this); }
+
+    public void addWindowListener() {
+	myFrame.addWindowListener(this); }
+
+    public Rectangle getVBounds() {
+	Rectangle virtualBounds = new Rectangle();
+	GraphicsEnvironment ge = GraphicsEnvironment.
+	    getLocalGraphicsEnvironment();
+	GraphicsDevice[] gs = ge.getScreenDevices();
+	for (int j = 0; j < gs.length; j++) {
+	    GraphicsDevice gd = gs[j];
+	    GraphicsConfiguration[] gc = 
+		gd.getConfigurations();
+	    for (int i = 0; i < gc.length; i++) {
+		virtualBounds = virtualBounds.union(gc[i].getBounds()); }
+	}
+	return virtualBounds; }
+
+    public Frame getFrame() {
+	return myFrame; }
+    
+    public int getHeight() {
+	return bounds.height; }
+
+    public int getWidth() {
+	return bounds.width; }
+
+    public void windowClosed(WindowEvent e) {
+	DrawLoop.finishFile();
+	System.exit(1); }
+
+    public void windowClosing(WindowEvent e) {
+	DrawLoop.finishFile();
+	System.exit(1); }
+
+    public void windowOpened(WindowEvent e) {}
+
+    public void windowIconified(WindowEvent e) {}
+
+    public void windowDeiconified(WindowEvent e) {}
+
+    public void windowActivated(WindowEvent e) {}
+
+    public void windowDeactivated(WindowEvent e) {}
+
+    public void windowGainedFocus(WindowEvent e) {}
+
+    public void windowLostFocus(WindowEvent e) {}
+
+    public void windowStateChanged(WindowEvent e) {}
+
+}
+

@@ -1,0 +1,40 @@
+clause:  IP-MAT*|IP-SUB*
+
+degree-particle: as|As|AS|so|So|SO|soe|Soe|SOE|sw*|Sw*|SW*|to|To|TO|too|Too|TOO
+
+enough: enough|inough|ynough|Enough|Inough|Ynough|enof*|inof*|ynof*|Enof*|Inof*|Ynof*|ynogh|Ynogh
+
+finite_aux:  *BEP*|*BED*|*DOP*|*DOD*|*HVP*|*HVD*|*MD*
+
+finite_verb:  *BEP*|*BED*|*DOP*|*DOD*|*HVP*|*HVD*|*MD*|*VBP*|*VBD*
+
+lfd: ADVP|ADVP-DIR|ADVP-LOC|ADVP-TMP|NP-ADV|IP-ABS|PP
+
+rsp-phrase: ADVP|ADVP-DIR|ADVP-LOC|ADVP-TMP|PP
+
+rsp-word:
+So|THAN|Than|Then|Therefore|Therfore|Yet|anon|neuerthe*|neverthe*|now|so|soe|than*|then|thence|thenne|thense|ther|there|therefore|thereof|therfore|therof|thither|thyther|yeat|yet*
+
+nominal_object:  N*|ADJ*|D*|Q*|OTHER*|CP-FRL|CONJ*
+
+nonfinite_clause:  IP-ABS*|IP-INF*|IP-PPL*|IP-SMC*|RRC*
+
+nonfinite_verb: *BAG*|*BE|*BEN*|*DAG*|*DAN*|*DO|*DON*|*HAG*|*HAN*|*HV|*HVN*|*MD0*|*VAG*| *VAN*|*VB|*VBN*|VP*|TO
+
+wh-clause: CP-CAR*|CP-CLF*|CP-CMP*|CP-EOP*|CP-FRL*|CP-QUE*|CP-REL*|CP-TMC*
+
+beseech: BESE*CH*|Bese*ch|bese*ch*|BESO*H*|Beso*h*|beso*h*
+
+bid:  BAD*|Bad*|bad*|BID*|Bid*|bid*
+
+pray:   PRAYD|Pray|Praye|Prayeng|Praying|prai|praid|praie|praied|praing|prainge|praiynge|pray|prayd|prayde|praye|prayed|prayedst|prayeing|prayeng|prayes|prayeth|praying|prayinge|p rayng|prey|preyd|preyed|preying
+
+linking_verb: apere*|appear*|apper*|BECAM*|becam*|becom*|*beecom*|becum*|chanc*|chans*|Contin*|contin*|contyn*|fall*|feel*|fel|fell*|get*|got*|grew*|grone|groying|grow*|gru*|kee p*|kep*|Look*|lok*|look*|plead*|proou*|proov*|prou*|prov*|remain*|remaned|remayn*|sauor*|savor*|sauour*|sa vour*|sem*|seem*|shew*|show*|smell*|sound*|stay*|tast*|turn*|wax*|wex*
+
+/* sometimes also come, hold (hold gracous in essex) */
+
+near: CLOSE|Close|close|FAR|Far|far|FARR*|Farr*|farr*|GAST*|Fast*|fast*|FURTHE 
+R|Further|further|NEAR*|Near*|near*|NER*|Ner*|ner*|NIGH*|Nigh*|nigh*|NYGH*|Nygh*|nygh*
+
+
+

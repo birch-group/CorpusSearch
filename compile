@@ -1,0 +1,20 @@
+#!/bin/sh
+cd CodingParse
+rm *.java
+rm *.class
+java -classpath ../javacc_4.0/javacc.jar javacc ParseCodingQuery.jj 
+cd ../
+javac -classpath . -deprecation CodingParse/ParseCodingQuery.java
+cd CSParse
+rm *.java
+rm *.class
+java -classpath ../javacc_4.0/javacc.jar javacc ParseQuery.jj
+#java -classpath ../freecc_0.9.3/freecc.jar freecc ParseQuery.jj
+cd ../
+javac -classpath . -deprecation CSParse/ParseQuery.java
+#cd FramesParse
+#java -classpath ../javacc_4.0/javacc.jar javacc ParseFrames.jj
+#cd ../
+#javac -classpath . FramesParse/ParseFrames.java
+
+

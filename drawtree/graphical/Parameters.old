@@ -1,0 +1,21 @@
+package drawtree;
+
+
+import java.awt.*;
+import java.awt.event.*;
+import syntree.*;
+
+public class Parameters {
+
+    public static int gt_height = 3000;
+    public static int gt_width = 5800;
+    public static int font_size = 12;
+
+    public static void setHeightWidth(int h, int w) {
+	//System.err.println("setting height and width:  " + h + ", " + w);
+	gt_height = h;
+	gt_width = w; }
+
+    public static void setFontSize(int fs) {
+	font_size = fs; }
+}

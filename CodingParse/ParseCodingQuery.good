@@ -1,0 +1,1105 @@
+/*
+ * Copyright © 2002 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+ * California 95054, U.S.A. All rights reserved.  Sun Microsystems, Inc. has
+ * intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation,
+ * these intellectual property rights may include one or more of the U.S.
+import  * patents listed at http://www.sun.com/patents and one or more additional
+ * patents or pending patent applications in the U.S. and in other countries.
+ * U.S. Government Rights - Commercial software. Government users are subject
+ * to the Sun Microsystems, Inc. standard license agreement and applicable
+ * provisions of the FAR and its supplements.  Use is subject to license terms.
+ * Sun,  Sun Microsystems,  the Sun logo and  Java are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries.  This
+ * product is covered and controlled by U.S. Export Control laws and may be
+ * subject to the export or import laws in other countries.  Nuclear, missile,
+ * chemical biological weapons or nuclear maritime end uses or end users,
+ * whether direct or indirect, are strictly prohibited.  Export or reexport
+ * to countries subject to U.S. embargo or to entities identified on U.S.
+ * export exclusion lists, including, but not limited to, the denied persons
+ * and specially designated nationals lists is strictly prohibited.
+ */
+
+options { JAVA_UNICODE_ESCAPE=true;
+	  DEBUG_PARSER=false; }
+
+PARSER_BEGIN(ParseCodingQuery)
+
+package CodingParse;
+
+import java.util.*;
+import java.io.*;
+
+import command.*;
+import syntree.*;
+import search_result.*;
+import search.*;
+import basicinfo.*;
+import coding.*;
+
+class RootNode {
+    LinkedList colnodes;
+
+    public RootNode(LinkedList in_colnodes) {
+       this.colnodes = in_colnodes; }
+
+    public CodingResult evaluate(SynTree sparse){
+       CodingResult cr = new CodingResult();
+       ColumnResult colres;
+       ColNode cn;
+
+       for (int i = 0; i < colnodes.size(); i++) {
+            cn = (ColNode)colnodes.get(i);
+	    colres = cn.evaluate(sparse);
+	    cr.addColumnResult(colres); }
+       return cr;
+    }
+
+    public void PrintToSystemErr() {
+       System.err.println("RootNode:  ");
+       for (int i = 0; i < colnodes.size(); i++) {
+	   ColNode cn = (ColNode)colnodes.get(i);
+	   cn.PrintToSystemErr(); }
+       System.err.println(""); }
+}
+
+class ColNode {
+    LinkedList scnodes;
+    ColNumNode cnn;
+
+    public ColNode(ColNumNode in_cnn, LinkedList in_scnodes) {
+        this.scnodes = in_scnodes;    
+	this.cnn = in_cnn; }
+
+    public ColumnResult evaluate(SynTree sparse) {
+        ColumnResult cr = new ColumnResult(cnn.getNum());
+	SubColNode scn;
+	SubColumnResult scr;
+
+	for (int i = 0; i < scnodes.size(); i++) {
+            scn = (SubColNode)scnodes.get(i);
+	    scr = scn.evaluate(sparse);
+	    cr.addSubColumnResult(scr); }
+        return cr;
+    }
+
+    public void PrintToSystemErr() {
+        SubColNode scn;
+        System.err.println("ColNode:  ");
+	cnn.PrintToSystemErr();
+	for (int i = 0; i < scnodes.size(); i++) {
+	    scn = (SubColNode)scnodes.get(i);
+	    scn.PrintToSystemErr(); }
+	System.err.println();
+    }
+}
+
+class SubColNode {
+    ColLabelNode cl;
+    QueryNode qn;
+
+    public SubColNode(ColLabelNode in_cl, QueryNode in_qn) {
+        this.cl = in_cl;
+	this.qn = in_qn; 
+	(this.qn).hist = new History(); }
+     
+    public void PrintToSystemErr() {
+        System.err.println("SubColNode:  ");
+	cl.PrintToSystemErr();
+	qn.PrintToSystemErr(); }
+
+    public SubColumnResult evaluate(SynTree sparse) {
+        SubColumnResult scr;
+	SentenceResult sr;
+
+	((this.qn).hist).removeAllElements();
+        sr = (this.qn).evaluate(sparse);
+	scr = new SubColumnResult(cl.getLabel(), sr);
+        return(scr);
+    }
+}   
+
+class ColNumNode{
+    int col_int;
+    Integer col_Int;
+    String num_str;
+
+    public ColNumNode(String collapse) {
+        // remove trailing ":".
+        num_str = collapse.substring(0, collapse.length() - 1);
+	col_Int = new Integer(num_str);
+        col_int = col_Int.intValue();
+        //this.PrintToSystemErr(); 
+    }
+
+    public int getNum() {
+        return col_int; }
+
+    public void PrintToSystemErr() {
+        System.err.println("ColNumNode:  ");
+        System.err.println(col_int); }
+}
+
+class ColLabelNode{
+    String label;
+
+    public ColLabelNode(String label_in) {
+        // remove trailing ":".
+        label = label_in.substring(0, label_in.length() - 1);
+        // if label begins with escape character, remove it.
+	if (label.startsWith("\\")) {
+	    label = label.substring(1, label.length()); }
+	//this.PrintToSystemErr(); 
+    }
+
+    public String getLabel() {	   
+        return label; }
+
+    public void PrintToSystemErr() {
+        System.err.println("ColLabelNode:  ");
+        System.err.println(label); }
+}
+
+
+abstract class QueryNode {
+    public abstract SentenceResult evaluate(SynTree sparse);
+    public abstract void PrintToSystemErr();
+    Vector args_for_same;
+    public static History hist;
+
+    public static SentenceResult Record (SentenceResult sr) {
+      hist.addSentenceResult(sr);
+      return(sr); }
+}
+
+class ElseNode extends QueryNode {
+    
+    protected ElseNode () {}
+
+    public SentenceResult evaluate(SynTree sparse) {
+	return(Bounds.Basic(sparse)); }
+
+    public void PrintToSystemErr() {
+        System.err.println("ElseNode:  "); }
+}	
+
+class NotNode extends QueryNode {
+    protected QueryNode qn;
+
+    protected NotNode (QueryNode qn1) {
+        this.qn = qn1;
+	this.args_for_same = qn1.args_for_same;
+	//this.PrintToSystemErr();
+    }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        SentenceResult sr;
+
+	sr = (this.qn).evaluate(sparse); 
+	return Record(Logicks.Not(sparse, sr, args_for_same.size(), hist)); }
+
+    public void PrintToSystemErr() {
+        System.err.println("NotNode:"); }
+}
+
+abstract class BinaryLogicNode extends QueryNode{ //AND, OR, XOR.
+
+    protected BinaryLogicNode() {}
+
+    protected BinaryLogicNode (LinkedList qnodes) 
+        { Init(qnodes); }
+    
+    protected void Init (LinkedList qnodes) {
+        QueryNode qn;
+        int i, j;
+	Vector qn_same;
+
+        this.qnodes = qnodes;
+        if (qnodes.size() > 0) {
+            this.qn1 = (QueryNode)qnodes.get(0); }
+        if (qnodes.size() > 1) {
+            this.qn2 = (QueryNode)qnodes.get(1); }
+	this.args_for_same = new Vector();
+	for (i = 0; i < qnodes.size(); i++) {
+	    qn = (QueryNode)qnodes.get(i);
+	    qn_same = qn.args_for_same;
+	    for (j = 0; j < qn_same.size(); j++) {
+	        (this.args_for_same).addElement((String)qn_same.elementAt(j));
+            }
+        }
+    }
+
+    public void PrintToSystemErr() {
+        System.err.println("BinaryLogicNode:  ");
+    }
+
+    protected QueryNode qn1;
+    protected QueryNode qn2;
+    protected LinkedList qnodes;
+}
+
+class AndNode extends BinaryLogicNode {
+    SameList list_o_same;
+
+    public AndNode(LinkedList qnodes) 
+        { super.Init(qnodes); } 
+	  //this.PrintToSystemErr();}
+
+    public SentenceResult evaluate(SynTree sparse) {
+	SentenceResult sr1, sr2, sr3, sr4;
+	Vector arg_List;
+	int qdex;
+	QueryNode qn3;  
+
+	sr1  = (this.qn1).evaluate(sparse);
+	if ((this.qnodes).size() == 1) {
+	    return sr1; }
+	sr2 = (this.qn2).evaluate(sparse);
+	args_for_same = new Vector();
+	this.addToArgsList(this.qn1, args_for_same);
+	this.addToArgsList(this.qn2, args_for_same);	
+	list_o_same = Commander.Sameness(args_for_same);
+	sr3 = (Logicks.And(sr1, sr2, list_o_same));
+        for (qdex = 2; qdex < (this.qnodes).size(); qdex++) {
+	    qn3 = (QueryNode)qnodes.get(qdex);
+	    addToArgsList(qn3, args_for_same);
+	    list_o_same = Commander.Sameness(args_for_same);
+	    sr4 = qn3.evaluate(sparse);
+	    sr3 = (Logicks.And(sr3, sr4, list_o_same)); }
+	return sr3; 
+    }
+
+    private void addToArgsList (QueryNode qn, Vector arg_list) {
+ 
+        if ((qn.args_for_same).size() == 0) {
+	    System.err.println("WARNING! Empty args_for_same:  ");
+	    qn.PrintToSystemErr(); }
+        for (int i = 0; i < (qn.args_for_same).size(); i++) {
+	    arg_list.addElement((String)(qn.args_for_same).elementAt(i)); }
+	return;
+    }
+
+    public void PrintToSystemErr() {
+        System.err.println("AndNode:"); }
+}
+
+class OrNode extends BinaryLogicNode{
+
+      public OrNode(LinkedList qnodes)
+        { super.Init(qnodes); }
+          //this.PrintToSystemErr();}
+
+      public SentenceResult evaluate(SynTree sparse) {
+	SentenceResult sr1, sr2, sr3, sr4;
+	QueryNode qn3;
+	int qdex;
+	
+	sr1  = (this.qn1).evaluate(sparse);
+	if ((this.qnodes).size() == 1) {
+	  return sr1; }
+	sr2 = (this.qn2).evaluate(sparse);
+        sr3 = (Logicks.Or(sr1, sr2));
+	for (qdex = 2; qdex < (this.qnodes).size(); qdex++) {
+            qn3 = (QueryNode)qnodes.get(qdex);
+            sr4 = qn3.evaluate(sparse);
+            sr3 = (Logicks.Or(sr3, sr4)); }
+	return sr3; }
+
+      public void PrintToSystemErr() {
+          System.err.println("OrNode:  "); }
+}
+
+class ArgNode{
+     String args;
+     // prefix_args is used for the same_list.  It's args with prefix,
+     // if  one exists.
+     String prefix_args, prefix; 
+     ArgList args_for_search;
+     boolean denied = false;
+
+    public ArgNode(String argo, boolean is_denied, String prefox) {
+        this.prefix_args = prefox + argo;
+	this.args = argo;
+	this.denied = is_denied;
+	this.prefix = prefox;
+	this.args_for_search = new ArgList(this.args);
+	CommandAux.CheckListForIgnore(this.args_for_search);
+	//this.PrintToSystemErr();
+    }
+
+    public boolean IsDenied () 
+        { return denied; }
+
+    public void PrintToSystemErr() {
+        System.err.println("ArgNode:  ");
+	System.err.println(args_for_search);
+    }
+}
+
+class IntArgNode{
+    int int_arg;
+    Integer arg_Int;
+
+    public IntArgNode(String argo) {
+        arg_Int = new Integer(argo);
+	int_arg = arg_Int.intValue();
+        //this.PrintToSystemErr();
+    }
+
+    public void PrintToSystemErr() {
+        System.err.println("IntArgNode:  ");
+        System.err.println(int_arg); }
+}
+
+abstract class ThreeListsNode extends QueryNode { // iDomsMod
+    ArgNode arg1, arg2, arg3;
+    ArgList x_List, y_List, z_List;
+
+    protected ThreeListsNode () {}
+
+    protected ThreeListsNode(ArgNode arg1, ArgNode arg2, ArgNode arg3)
+        { Init(arg1, arg2, arg3); }
+
+    protected void Init(ArgNode arg1, ArgNode arg2, ArgNode arg3) {
+        this.arg1 = arg1;
+        this.arg2 = arg2;
+        this.arg3 = arg3;
+        this.x_List = arg1.args_for_search;
+        this.y_List = arg3.args_for_search;
+        this.z_List = arg2.args_for_search;
+        this.args_for_same = new Vector();
+        args_for_same.addElement(arg1.prefix_args);
+        args_for_same.addElement(arg3.prefix_args);
+        //this.PrintToSystemErr();
+    }
+
+    public void PrintToSystemErr() {
+        System.err.println("ThreeListsNode:  ");
+        System.err.println("x_List: " + this.x_List);
+        System.err.println("y_List: " + this.y_List);
+        System.err.println("z_List: " + this.z_List); }
+}
+
+class iDomsModNode extends ThreeListsNode {
+
+    public iDomsModNode (ArgNode arg1, ArgNode arg2, ArgNode arg3)
+        { super.Init(arg1, arg2, arg3); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+           { return Record(iDomsMod.Not_x(sparse, x_List, z_List, y_List)); }
+        if (arg3.IsDenied())
+           { return Record(iDomsMod.Not_y(sparse, x_List, z_List, y_List)); }
+        return Record(iDomsMod.Plain(sparse, x_List, z_List, y_List)); }
+}
+
+
+class iDomsViaTraceNode extends ThreeListsNode {
+      
+    public iDomsViaTraceNode (ArgNode arg1, ArgNode arg2, ArgNode arg3)
+        { super.Init(arg1, arg2, arg3); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())  
+	   { return Record(iDomsViaTrace.Not_x(sparse, x_List, z_List, y_List)); }
+        if (arg3.IsDenied()) 
+           { return Record(iDomsViaTrace.Not_y(sparse, x_List, z_List, y_List)); }
+        return Record(iDomsViaTrace.Plain(sparse, x_List, z_List, y_List)); }
+}
+
+
+abstract class TrinarySearchNode extends QueryNode { 
+    ArgNode arg1, arg2;
+    ArgList x_List, y_List;
+    IntArgNode intarg1;
+    int arg_int;
+
+    protected TrinarySearchNode() {}
+
+    protected TrinarySearchNode(ArgNode arg1, IntArgNode intarg1, 
+                                ArgNode arg2) 
+        { Init(arg1, intarg1, arg2); }
+
+    protected void Init(ArgNode arg1, IntArgNode intarg1, ArgNode arg2) {
+        this.arg_int = intarg1.int_arg;
+	this.arg1 = arg1;
+	this.arg2 = arg2;
+	this.x_List = arg1.args_for_search;
+	this.y_List = arg2.args_for_search;
+	this.args_for_same = new Vector();
+	args_for_same.addElement(arg1.prefix_args);
+	args_for_same.addElement(arg2.prefix_args);
+        //this.PrintToSystemErr();
+    }
+
+    public void PrintToSystemErr() {
+        System.err.println("TrinarySearchNode:  ");
+	System.err.println("x_List: " + this.x_List);
+	System.err.println("y_List: " + this.y_List);
+	System.err.println("arg_int: " + this.arg_int); }
+}
+
+abstract class BinarySearchNode extends QueryNode {
+    ArgNode arg1, arg2;
+    ArgList x_List, y_List;
+    
+    protected BinarySearchNode() {}
+
+    protected BinarySearchNode(ArgNode arg1, ArgNode arg2)
+        { Init(arg1, arg2); }
+
+    protected void Init(ArgNode arg1, ArgNode arg2) {
+        this.arg1 = arg1;
+	this.arg2 = arg2;
+        this.x_List = arg1.args_for_search;
+        this.y_List = arg2.args_for_search;
+        this.args_for_same = new Vector();
+	args_for_same.addElement(arg1.prefix_args);
+	args_for_same.addElement(arg2.prefix_args);
+        //this.PrintToSystemErr();
+    }
+    
+    public void PrintToSystemErr () {
+        System.err.println("in BinarySearchNode:  ");
+	System.err.println("x_List:  " + x_List);
+	System.err.println("y_list:  " + y_List);
+	System.err.println("args_for_same: " + args_for_same); }
+}
+
+abstract class IntBinarySearchNode extends QueryNode { // DomsWords, DomsWordsLess...
+    ArgNode arg1;
+    IntArgNode intarg1;
+    ArgList x_List;
+    int arg_int;
+
+    protected IntBinarySearchNode() {}
+
+    protected IntBinarySearchNode(ArgNode arg1, IntArgNode intarg1)
+        { Init(arg1, intarg1); }
+
+    protected void Init(ArgNode arg1, IntArgNode intarg1) {
+        this.arg1 = arg1;
+        this.intarg1 = intarg1;
+        this.x_List = arg1.args_for_search;
+        this.arg_int = intarg1.int_arg;
+        this.args_for_same = new Vector();
+        args_for_same.addElement(arg1.prefix_args);
+	args_for_same.addElement(arg1.prefix_args);
+        //this.PrintToSystemErr();
+    }
+
+    public void PrintToSystemErr () {
+        System.err.println("in IntBinarySearchNode:  ");
+        System.err.println("x_List:  " + x_List);
+        System.err.println("args_for_same: " + args_for_same);
+	System.err.println("arg_int: " + arg_int); }
+}
+
+abstract class UnarySearchNode extends QueryNode { // isRoot, Exists
+    ArgNode arg1;
+    ArgList x_List;
+
+    protected UnarySearchNode() {}
+
+    protected UnarySearchNode(ArgNode arg1)
+        { Init(arg1); }
+
+    protected void Init(ArgNode arg1) {
+        this.arg1 = arg1;
+        this.x_List = arg1.args_for_search;
+        this.args_for_same = new Vector();
+        args_for_same.addElement(arg1.prefix_args);
+	args_for_same.addElement(arg1.prefix_args);
+  //      this.PrintToSystemErr();
+    }
+
+    public void PrintToSystemErr () {
+        System.err.println("in UnarySearchNode:  ");
+        System.err.println("x_List:  " + x_List);
+        System.err.println("args_for_same: " + args_for_same); }
+}
+
+class IsRootNode extends UnarySearchNode {
+
+    public IsRootNode (ArgNode arg1) 
+        { super.Init(arg1); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+	    { return Record(isRoot.Not_x(sparse, x_List)); }
+	return Record(isRoot.Plain(sparse, x_List)); }
+}
+
+class ExistsNode extends UnarySearchNode {
+
+    public ExistsNode (ArgNode arg1) 
+        { super.Init(arg1); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied()) 
+            { return Record(Exists.Not_x(sparse, x_List)); }
+        return Record(Exists.Plain(sparse, x_List)); }
+}
+
+class inIDNode extends UnarySearchNode {
+
+    public inIDNode (ArgNode arg1)
+        { super.Init(arg1); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+            { return Record(inID.Not_x(sparse, x_List)); }
+        return Record(inID.Plain(sparse, x_List)); }
+}
+
+class ColumnNode extends TrinarySearchNode {
+    
+    public ColumnNode (ArgNode arg1, IntArgNode arg2, ArgNode arg3)
+        { super.Init(arg1, arg2, arg3); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg2.IsDenied())
+            { return Record(Column.Not_y(sparse, x_List, arg_int, y_List)); }
+        return Record(Column.Plain(sparse, x_List, arg_int, y_List)); }
+}
+
+class iDomsNumberNode extends TrinarySearchNode {
+
+    public iDomsNumberNode (ArgNode arg1, IntArgNode arg2, ArgNode arg3) 
+        { super.Init(arg1, arg2, arg3); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg2.IsDenied()) 
+	    { return Record(iDomsNumber.Not_y(sparse, x_List, y_List, arg_int)); } 
+        return Record(iDomsNumber.Plain(sparse, x_List, y_List, arg_int)); }
+}
+
+class iDomsTotalNode extends IntBinarySearchNode {
+
+    public iDomsTotalNode (ArgNode arg1, IntArgNode intarg1)
+        { super.Init(arg1, intarg1); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        return Record(iDomsTotal.Plain(sparse, x_List, arg_int)); }
+}
+
+class iDomsTotalMoreNode extends IntBinarySearchNode {
+
+    public iDomsTotalMoreNode (ArgNode arg1, IntArgNode intarg1)
+        { super.Init(arg1, intarg1); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        return Record(iDomsTotalMore.Plain(sparse, x_List, arg_int)); }
+}
+
+class iDomsTotalLessNode extends IntBinarySearchNode {
+
+    public iDomsTotalLessNode (ArgNode arg1, IntArgNode intarg1)
+        { super.Init(arg1, intarg1); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        return Record(iDomsTotal.Plain(sparse, x_List, arg_int)); }
+}
+
+class DomsWordsNode extends IntBinarySearchNode {
+    
+    public DomsWordsNode (ArgNode arg1, IntArgNode intarg1)
+        { super.Init(arg1, intarg1); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        return Record(DomsWords.Plain(sparse, x_List, arg_int)); }
+}
+
+class DomsWordsLessNode extends IntBinarySearchNode {
+
+    public DomsWordsLessNode (ArgNode arg1, IntArgNode intarg1) 
+        { super.Init(arg1, intarg1); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        return Record(DomsWordsLess.Plain(sparse, x_List, arg_int)); }
+}
+
+class DomsWordsMoreNode extends IntBinarySearchNode {
+
+    public DomsWordsMoreNode (ArgNode arg1, IntArgNode intarg1)
+        { super.Init(arg1, intarg1); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        return Record(DomsWordsMore.Plain(sparse, x_List, arg_int)); }
+}
+
+class CCommandsNode extends BinarySearchNode {
+
+    public CCommandsNode (ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+          { return Record(CCommands.Not_x(sparse, x_List, y_List)); }
+        if (arg2.IsDenied())
+          { return Record(CCommands.Not_y(sparse, x_List, y_List)); }
+        return Record(CCommands.Plain(sparse, x_List, y_List)); }
+}
+
+class SameIndexNode extends BinarySearchNode {
+
+    public SameIndexNode (ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+	   { return Record(SameIndex.Not_x(sparse, x_List, y_List)); }
+        if (arg2.IsDenied())
+          { return Record(SameIndex.Not_y(sparse, x_List, y_List)); }
+        return Record(SameIndex.Plain(sparse, x_List, y_List)); }
+}
+
+
+
+class DomsNode extends BinarySearchNode {
+
+    public DomsNode (ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied()) 
+	    { return Record(Dominates.Not_x(sparse, x_List, y_List)); }
+        if (arg2.IsDenied())
+	    { return Record(Dominates.Not_y(sparse, x_List, y_List)); }
+        return Record(Dominates.Plain(sparse, x_List, y_List)); }
+}
+
+class DomsTNode extends BinarySearchNode {
+
+    public DomsTNode (ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied()) 
+	    { return Record(DominatesT.Not_x(sparse, x_List, y_List)); }
+        if (arg2.IsDenied())
+	    { return Record(DominatesT.Not_y(sparse, x_List, y_List)); }
+        return Record(DominatesT.Plain(sparse, x_List, y_List)); }
+}
+
+class iDomsNode extends BinarySearchNode {
+
+    public iDomsNode(ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+      
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+	    { return Record(iDominates.Not_x(sparse, x_List, y_List)); }
+	if (arg2.IsDenied())
+	    { return Record(iDominates.Not_y(sparse, x_List, y_List)); }
+	return Record(iDominates.Plain(sparse, x_List, y_List)); }
+}
+
+class iDomsLastNode extends BinarySearchNode {
+
+    public iDomsLastNode(ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+            { return Record(iDomsLast.Not_x(sparse, x_List, y_List)); }
+        if (arg2.IsDenied())
+            { return Record(iDomsLast.Not_y(sparse, x_List, y_List)); }
+        return Record(iDomsLast.Plain(sparse, this.x_List, this.y_List)); }
+}
+
+class iDomsFirstNode extends BinarySearchNode {
+
+    public iDomsFirstNode(ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+            { return Record(iDomsFirst.Not_x(sparse, x_List, y_List)); }
+        if (arg2.IsDenied())
+            { return Record(iDomsFirst.Not_y(sparse, x_List, y_List)); }
+        return Record(iDomsFirst.Plain(sparse, this.x_List, this.y_List)); }
+}
+
+class iDomsOnlyNode extends BinarySearchNode {
+
+    public iDomsOnlyNode(ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+            { return Record(iDomsOnly.Not_x(sparse, x_List, y_List)); }
+        if (arg2.IsDenied())
+            { return Record(iDomsOnly.Not_y(sparse, x_List, y_List)); }
+        return Record(iDomsOnly.Plain(sparse, this.x_List, this.y_List)); }
+}
+
+class iDomsTNode extends BinarySearchNode {
+
+    public iDomsTNode(ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+          { return Record(iDomsT.Not_x(sparse, x_List, y_List)); }
+        if (arg2.IsDenied())
+          { return Record(iDomsT.Not_y(sparse, x_List, y_List)); }
+        return Record(iDomsT.Plain(sparse, this.x_List, this.y_List)); }
+}
+
+class HasSisterNode extends BinarySearchNode {
+
+    public HasSisterNode(ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+            { return Record(HasSister.Not_x(sparse, x_List, y_List)); }
+        if (arg2.IsDenied())
+            { return Record(HasSister.Not_y(sparse, x_List, y_List)); }
+        return Record(HasSister.Plain(sparse, x_List, y_List)); }
+}
+
+class iPresNode extends BinarySearchNode {
+
+    public iPresNode(ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+	    { return Record(iPrecedes.Not_x(sparse, x_List, y_List)); }
+	if (arg2.IsDenied())
+	    { return Record(iPrecedes.Not_y(sparse, x_List, y_List)); }
+        return Record(iPrecedes.Plain(sparse, x_List, y_List)); }
+}
+
+class PresNode extends BinarySearchNode {
+
+    public PresNode(ArgNode arg1, ArgNode arg2)
+        { super.Init(arg1, arg2); }
+
+    public SentenceResult evaluate(SynTree sparse) {
+        if (arg1.IsDenied())
+	    { return Record(Precedes.Not_x(sparse, x_List, y_List)); }
+	if (arg2.IsDenied())
+	    { return Record(Precedes.Not_y(sparse, x_List, y_List)); }
+	return Record(Precedes.Plain(sparse, x_List, y_List)); }
+}
+
+public class ParseCodingQuery {
+    public static QueryNode qn;
+    public static RootNode rn;
+
+  public static void main(String args[]) throws ParseException {
+    System.err.println("BULLWINKLE! This method does nothing.");
+  }
+
+  public static RootNode makeCodingQueryTree(StringReader sread) 
+      throws ParseException{
+          
+          ParseCodingQuery parser = new ParseCodingQuery(sread);
+          rn = parser.CodeRoot();
+	  FlushQuery();
+	  //Syntax.replace_index = qn.getReplaceIndex();
+	  //System.err.println("replace_index:  " + qn.getReplaceIndex());
+          return rn; }
+
+  public static CodingResult evaluable (SynTree sparse) {
+      return (rn.evaluate(sparse));
+  }
+}
+
+PARSER_END(ParseCodingQuery)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+SKIP :
+{  "/*" : WithinComment }
+<WithinComment> SKIP :
+{  "*/" : DEFAULT }
+
+TOKEN :
+{
+  < OPEN_CURLY: "{" >
+| < CLOSE_CURLY: "}" >
+| < COL_NUM: ["1"-"9"] (["0"-"9"])* ":" >
+| < COL_LABEL: (~["(", ")", "{", "}", "[", "]", " ", "!"])* ":"> 
+| < ELSE: "ELSE" >
+| < OPEN_PAREN: "(" >
+| < CLOSE_PAREN: ")" >
+| < ISROOT: "isRoot"|"IsRoot"|"isroot"|"ISROOT" >
+| < EXISTS: "Exists"|"exists"|"EXISTS" >
+| < IPRES: "iPrecedes"|"iPres"|"ipres"|"iprecedes"|"IPRECEDES"|"IPRES" >
+| < HASSISTER: "HasSister"|"hasSister"|"hassister"|"HASSISTER" >
+| < PRES: "Precedes"|"Pres"|"pres"|"precedes"|"PRECEDES"|"PRES" >
+| < IDOMS: "iDominates"|"iDoms"|"idominates"|"idoms"|"IDOMS"|"IDOMINATES" >
+| < IDOMSMOD: "iDomsMod"|"idomsmod"|"IDOMSMOD" >
+| < IDOMSLAST: "iDomsLast"|"idomslast"|"IDOMSLAST" >
+| < IDOMSFIRST: "iDomsFirst"|"idomsfirst"|"IDOMSFIRST" >
+| < IDOMSONLY: "iDomsOnly"|"idomsonly"|"IDOMSONLY" >
+| < IDOMST: "iDomsT"|"idomst"|"IDOMST"|"iDomst">
+| < IDOMSVIATRACE: "idomsviatrace"|"iDomsViaTrace" >
+| < DOMST: "DomsT"|"domst"|"DOMST"|"dominatesT"|"DominatesT" >
+| < DOMS: "Dominates"|"Doms"|"doms"|"dominates"|"DOMINATES"|"DOMS" >
+
+| < CCOMMANDS: "CCommands"|"ccommands"|"cCommands"|"CCOMMANDS" >
+| < SAMEINDEX: "SameIndex"|"sameindex"|"sameIndex"|"SAMEINDEX" >
+| < IDOMSNUMBER: "iDomsNumber"|"iDomsNum"|"idomsnumber"|"idomsnum"|"IDOMSNUM" >
+| < NEIGHBORHOOD: "Neighborhood" >
+| < COLUMN: "Column"|"Col"|"column"|"col"|"COL"|"COLUMN" >
+| < IDOMSTOTAL: "iDomsTotal"|"idomstotal"|"IDOMSTOTAL" >
+| < IDOMSTOTALMORE: "iDomsTotal>"|"idomstotal>"|"IDOMSTOTALMORE"|"IDOMSTOTAL>" >
+| < IDOMSTOTALLESS: "iDomsTotal<"|"idomstotal<"|"IDOMTOTALLESS"|"IDOMSTOTAL<" >
+| < DOMSWORDS: "DomsWords"|"domsWords"|"domswords"|"DOMSWORDS" >
+| < DOMSWORDSLESS: "DomsWords<"|"domsWords<"|"domswords<"|"DOMSWORDS<"|"DOMSWORDSLESS" >
+| < DOMSWORDSMORE: "DomsWords>"|"domsWords>"|"domswords>"|"DOMSWORDSMORE"|"DOMSWORDS>" >
+
+
+| < INID: "inID"|"InID"|"INID" >
+| < AND: "AND" >
+| < OR: "OR" >
+| < NOT: "NOT" >
+| < NOT_ARG: "!" >
+| < PREFIX: "[" ["1"-"9"] (["0"-"9"])* "]" >
+
+
+}
+
+
+TOKEN : /* Search-function arguments*/
+{
+    < INTARG: ["1"-"9"](["0"-"9"])* >
+|   < ARG: (~["(", ")", "{", "}", " ", "!"])* > }
+
+/*
+This causes an error message to be printed
+to the screen in case of an unknown token.
+*/
+TOKEN: 
+{ < UNKNOWN: ~[] > }
+
+void FlushQuery() :
+{ }
+{   <EOF> { return; }  }
+
+RootNode CodeRoot() :
+{   ColNode cn1, cn2;
+    LinkedList cnodes = new LinkedList(); }	
+{   
+    cn1=ColQuery() ( cn2=ColQuery(){ cnodes.add(cn2); } )*
+        { cnodes.add(0, cn1);
+        return new RootNode(cnodes); }
+}
+
+ColNode ColQuery():
+{   ColNumNode col_num;
+    LinkedList scnodes = new LinkedList();
+    SubColNode scn1, scn2; }
+{
+    col_num=ColNum() <OPEN_CURLY> scn1=SubColQuery() 
+      (scn2=SubColQuery() { scnodes.add(scn2); } )* <CLOSE_CURLY>
+        { scnodes.add(0, scn1);
+	return new ColNode(col_num, scnodes); }
+}
+
+SubColNode SubColQuery():
+{   ColLabelNode col_label;
+    QueryNode qn1; }
+{
+    col_label=ColLabel() qn1=SubColQueryOrElse()
+        { return new SubColNode(col_label, qn1); }
+}
+
+QueryNode SubColQueryOrElse():
+{
+    QueryNode qn1;
+    Token sf_token=null; }
+{
+    sf_token=<ELSE>
+        { return new ElseNode(); }
+    | qn1=OrQuery()
+        { return qn1; }
+}
+
+ColLabelNode ColLabel():
+{   ColLabelNode cln;
+    Token sf_token=null;
+    String sf_label; }
+{
+    sf_token=<COL_LABEL>
+        { sf_label = sf_token.toString();
+	cln = new ColLabelNode(sf_label);
+	return cln; }
+}
+
+ColNumNode ColNum():
+{   ColNumNode cnn;
+    Token sf_token=null;
+    String sf_int; }
+{
+    sf_token=<COL_NUM>
+        { sf_int = sf_token.toString();
+        cnn = new ColNumNode(sf_int);
+        return cnn; }
+}
+
+QueryNode OrQuery() :
+{   QueryNode qn1, qn2;
+    LinkedList qnodes = new LinkedList(); }
+{
+    qn1=AndQuery() (<OR> qn2=AndQuery(){ qnodes.add(qn2); })*
+        { qnodes.add(0, qn1);
+	return new OrNode(qnodes); }
+}
+
+QueryNode AndQuery():
+{   QueryNode qn1, qn2;
+    LinkedList qnodes = new LinkedList(); }
+{
+    qn1=NotQuery() (<AND> qn2=NotQuery() { qnodes.add(qn2); } )*
+        { qnodes.add(0, qn1);
+	return new AndNode(qnodes); }
+}
+
+QueryNode NotQuery():
+{   QueryNode qn; }
+{
+    <NOT> qn=Atom_Stmt() 
+        { return new NotNode(qn); }
+    | qn=Atom_Stmt()
+        { return (qn); }
+}
+
+QueryNode Atom_Stmt():
+{   QueryNode qn;
+    ArgNode arg1; }
+{
+    <OPEN_PAREN>qn=OrQuery()<CLOSE_PAREN>
+        { return qn; }
+    | arg1=Arg() qn=UnBinTriCall(arg1)
+        { return qn; }
+}
+
+QueryNode UnBinTriCall(ArgNode arg1):
+{  QueryNode qn;
+   Token sf_token=null;
+   ArgNode arg2, arg3;
+   IntArgNode int_arg; }
+{
+// Unary Call.
+    sf_token=<ISROOT>
+        { return new IsRootNode(arg1); }
+    | sf_token=<EXISTS>
+        { return new ExistsNode(arg1); }
+    | sf_token=<INID>
+        { return new inIDNode(arg1); }
+// Binary Call.
+    | sf_token=<IDOMS> arg2=Arg()
+        { return new iDomsNode(arg1, arg2); } 
+    | sf_token=<IDOMSLAST> arg2=Arg()
+        { return new iDomsLastNode(arg1, arg2); }
+    | sf_token = <IDOMST> arg2 = Arg()
+        { return new iDomsTNode(arg1, arg2); }
+    | sf_token=<IDOMSFIRST> arg2=Arg()
+        { return new iDomsFirstNode(arg1, arg2); }
+    | sf_token=<IDOMSONLY> arg2=Arg()
+        { return new iDomsOnlyNode(arg1, arg2); }
+    | sf_token=<DOMS> arg2=Arg()
+        { return new DomsNode(arg1, arg2); }
+    | sf_token=<DOMST> arg2=Arg()
+        { return new DomsTNode(arg1, arg2); }	
+    | sf_token=<IPRES> arg2=Arg()
+        { return new iPresNode(arg1, arg2); }
+    | sf_token=<HASSISTER> arg2=Arg()
+        { return new HasSisterNode(arg1, arg2); }
+    | sf_token=<PRES> arg2=Arg()   
+        { return new PresNode(arg1, arg2); }
+    | sf_token=<CCOMMANDS> arg2=Arg()
+        { return new CCommandsNode(arg1, arg2); }
+    | sf_token=<SAMEINDEX> arg2=Arg()
+        { return new SameIndexNode(arg1, arg2); }
+// IntBinaryCall.
+    | sf_token=<IDOMSTOTAL> int_arg=IntArg()
+        { return(new iDomsTotalNode(arg1, int_arg)); }
+    | sf_token=<IDOMSTOTALMORE> int_arg=IntArg()
+        { return(new iDomsTotalMoreNode(arg1, int_arg)); }
+    | sf_token=<IDOMSTOTALLESS> int_arg=IntArg()
+        { return(new iDomsTotalLessNode(arg1, int_arg)); }
+    | sf_token=<DOMSWORDS> int_arg=IntArg()
+        { return(new DomsWordsNode(arg1, int_arg)); }
+    | sf_token=<DOMSWORDSLESS> int_arg=IntArg()
+        { return(new DomsWordsLessNode(arg1, int_arg)); }
+    | sf_token=<DOMSWORDSMORE> int_arg=IntArg()
+        { return(new DomsWordsMoreNode(arg1, int_arg)); }
+// Trinary Call.
+    | sf_token=<IDOMSNUMBER> int_arg=IntArg() arg2=Arg()
+        { return(new iDomsNumberNode(arg1, int_arg, arg2)); } 
+    | sf_token=<COLUMN> int_arg=IntArg() arg2=Arg()
+        { return(new ColumnNode(arg1, int_arg, arg2)); }
+// Three Lists Node.
+    | sf_token=<IDOMSMOD> arg2=Arg() arg3=Arg()
+        { return(new iDomsModNode(arg1, arg2, arg3)); }
+    | sf_token=<IDOMSVIATRACE> arg2=Arg() arg3=Arg()
+        { return(new iDomsViaTraceNode(arg1, arg2, arg3)); }
+}
+
+
+IntArgNode IntArg():
+{   IntArgNode ian;
+    Token sf_token=null;
+    String sf_int; }
+{
+    sf_token=<INTARG>
+        { sf_int = sf_token.toString();
+	ian = new IntArgNode(sf_int);
+	return ian; }
+}
+
+ArgNode Arg():
+{   ArgNode an;
+    Token sf_token=null;
+    Token sf_token_pre=null;
+    String sf_name;
+    String sf_prefix; }
+{
+    sf_token=<ARG>
+        { sf_name = sf_token.toString();
+        an = new ArgNode(sf_name, false, "");
+        return an; }
+    | sf_token_pre=<PREFIX> sf_token=<ARG>
+        { sf_name = sf_token.toString();
+        sf_prefix = sf_token_pre.toString();
+        an = new ArgNode(sf_name, false, sf_prefix);
+        return an; }
+    |<NOT_ARG> an=NotArg()
+        { return an; }
+}
+
+ArgNode NotArg():
+{
+    ArgNode an;
+    Token sf_token=null;
+    Token sf_token_curly=null;
+    Token sf_token_pre=null;
+    String sf_prefix;
+    String sf_name;
+    String sf_curly;
+}
+{   sf_token =<ARG> {
+        sf_name = sf_token.toString();
+        an = new ArgNode(sf_name, true, "");
+        return an; }
+    | sf_token_pre=<PREFIX> sf_token=<ARG> {
+        sf_name = sf_token.toString();
+        sf_prefix = sf_token_pre.toString();
+        an = new ArgNode(sf_name, true, sf_prefix);
+        return an; }
+
+}
+

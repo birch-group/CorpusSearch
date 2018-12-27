@@ -1,0 +1,43 @@
+package io;
+
+import java.io.*;
+import java.util.*;
+
+public class XMLObject {
+
+    String field_name;
+    Vector attributes;
+    InFileDominatrix in_file;
+
+    public XMLObject() { Init(); }
+
+    public XMLObject(String f_name) {
+	Init();
+	this.field_name = f_name; }
+
+    public XMLObject(String f_name, InFileDominatrix inn_x) {
+	Init();
+	this.field_name = f_name;
+    }
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}

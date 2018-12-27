@@ -1,0 +1,221 @@
+/*
+	Beth Randall: Jan 2001
+	SynKernel.java
+	This class contains code to rearrange frames_vec
+	by increasing length of syntactic kernel.
+*/
+
+import java.io.*;
+import java.util.*;
+
+public class SynKernel extends ArrangeLex {
+
+public static Vector kernel_dex = new Vector();
+
+/*
+	LaterFrame -- determines whether one frame
+		is alphabetically later than another.
+	input -- subframe1 
+	      -- subframe2
+	output -- boolean -- true if subframe1 is
+		alphabetically later than subframe2;
+		false otherwise.
+*/
+public static boolean LaterFrame (Vector subframe1, Vector subframe2) {
+	int frame_length1, frame_length2, i, less_length;
+        String label1, label2;
+
+	frame_length1 = subframe1.size();
+	frame_length2 = subframe2.size();
+	if (frame_length1 > frame_length2) {
+// subtract 1 from less_length so you don't compare ID nodes.
+		less_length = frame_length2 - 1;
+	}
+	else {
+// subtract 1 from less_length so you don't compare ID nodes.
+		less_length = frame_length1 - 1;
+	}
+	for (i = 1; i < less_length; i++) {
+                label1 = (String)subframe1.elementAt(i);
+                label2 = (String)subframe2.elementAt(i);
+                if (label1.compareTo(label2) > 0) {
+                        return true;
+                }
+                if (label1.compareTo(label2) < 0) {
+                        return false;
+                }
+        }
+	if (frame_length1 > frame_length2) {
+		return true;
+	}
+	return false;
+} // end method LaterFrame
+
+/*
+	AlphaFrame -- within frames that have the same kernel,
+		sorts frames alphabetically.
+		Also, stores indices of kernel categories in
+		kernel_dex.
+	input -- int lower -- first index of next kernel category.
+	output -- void.
+*/
+public static void AlphaFrame (int lower) {
+	Integer dex;
+	int i;
+
+/*
+	if (frames_vec.size() == 1) {
+		dex = new Integer(1);
+		kernel_dex.addElement(dex);
+		return;
+	}
+*/
+	for (i = lower + 1; i < frames_vec.size(); i++) {
+		if (LaterKernel(i, lower)) {
+			dex = new Integer(i);
+			kernel_dex.addElement(dex);
+			QuickSortLaterFrame(lower, i - 1);
+			if (i < frames_vec.size() - 1) { 
+				AlphaFrame(i);
+				return;
+			}
+		} // end if (length1 > length2)
+		if (i == frames_vec.size() - 1) {
+			QuickSortLaterFrame(lower, i);
+			dex = new Integer(i);
+			kernel_dex.addElement(dex);
+			return;
+		}
+	} // end for (i = lower; i < frames_vec.size(); i++)
+	return;
+} // end method AlphaFrame
+
+/*
+	QuickSortLaterFrame -- quick sorts frame_vec 
+		within kernel categories alphabetically by frame.
+	input -- lower -- lower index
+	      -- upper -- upper index
+	output -- void.
+*/
+public static void QuickSortLaterFrame (int lower, int upper) {
+	Random chance = new Random();
+	int pivot_loc, index, random_dex;
+
+	if (upper > lower) {
+		random_dex = chance.nextInt(upper - lower); 
+		index = lower + random_dex;
+		pivot_loc = SplitLaterFrame(lower, upper, index);
+		QuickSortLaterFrame(lower, pivot_loc - 1);
+		QuickSortLaterFrame(pivot_loc + 1, upper);
+	} // end if (upper > lower)
+	return;
+} // end method QuickSortLaterFrame 
+
+/*
+	SplitLaterFrame -- called by QuickSortLaterFrame.  Splits list into
+		two parts, those less than List[pivot_loc] on the
+		left, those greater on the right.  
+		Alphabetizes by word entry.
+	input -- lower -- lower index
+	      -- upper -- upper index
+	      -- pivot_loc -- location of pivot
+	output -- int -- pivot_loc  -- new location of pivot
+*/
+public static int SplitLaterFrame(int lower, int upper, int pivot_loc) {
+	int i;
+	Vector subframe1, subframe2;
+
+	subframe1 = (Vector)frames_vec.elementAt(pivot_loc);
+	Swap(frames_vec, lower, pivot_loc);
+	pivot_loc = lower;
+	for (i = lower + 1; i <= upper; i++) {
+		subframe2 = (Vector)frames_vec.elementAt(i);	
+		if (LaterFrame(subframe1, subframe2)) {
+			pivot_loc += 1;
+			Swap(frames_vec, pivot_loc, i);
+		} // end if (LaterFrame(subframe1, subframe2))
+	} // end for (i = lower + 1; i <= upper; i++)
+	Swap(frames_vec, lower, pivot_loc);
+	return (pivot_loc);
+} // end SplitLaterFrame
+
+
+/*
+	SameLength -- sorts sub-frames with kernels of the same length 
+		alphabetically.
+		We assume that frames_vec has already been sorted by
+		kernel length.
+	input -- int lower -- first index of next length category.
+	output -- void.
+*/
+public static void SameLength (int lower) {
+	int i, length1, length2;
+
+	length1 = GetKernelLength(lower);
+	for (i = lower; i < frames_vec.size(); i++) {
+		length2 = GetKernelLength(i);
+		if (length2 > length1) {
+			QuickSortAlphaKernel(lower, i - 1);
+			if (i < frames_vec.size() - 1) { 
+				SameLength(i);
+				return;
+			}
+		} // end if (length1 > length2)
+		if (i == frames_vec.size() - 1) {
+			QuickSortAlphaKernel(lower, i);
+			return;
+		}
+	} // end for (i = lower; i < frames_vec.size(); i++)
+	return;
+} // end method SameLength
+
+/*
+	QuickSortAlphaKernel -- quick sorts frame_vec 
+		alphabetically within same-kernel-length 
+		categories.
+	input -- lower -- lower index
+	      -- upper -- upper index
+	output -- void.
+*/
+public static void QuickSortAlphaKernel (int lower, int upper) {
+	Random chance = new Random();
+	int pivot_loc, index, random_dex;
+
+	if (upper > lower) {
+		random_dex = chance.nextInt(upper - lower); 
+		index = lower + random_dex;
+		pivot_loc = SplitAlphaKernel(lower, upper, index);
+		QuickSortAlphaKernel(lower, pivot_loc - 1);
+		QuickSortAlphaKernel(pivot_loc + 1, upper);
+	} // end if (upper > lower)
+	return;
+} // end method QuickSortAlphaKernel 
+
+/*
+	SplitAlphaKernel -- called by QuickSortAlphaKernel.  Splits list into
+		two parts, those less than List[pivot_loc] on the
+		left, those greater on the right.  
+		Alphabetizes by word entry.
+	input -- lower -- lower index
+	      -- upper -- upper index
+	      -- pivot_loc -- location of pivot
+	output -- int -- pivot_loc  -- new location of pivot
+*/
+public static int SplitAlphaKernel(int lower, int upper, int pivot_loc) {
+	int i, prev_piv;
+
+	prev_piv = pivot_loc;
+	Swap(frames_vec, lower, pivot_loc);
+	pivot_loc = lower;
+	for (i = lower + 1; i <= upper; i++) {
+		if (LaterKernel(prev_piv, i)) {
+			pivot_loc += 1;
+			Swap(frames_vec, pivot_loc, i);
+		} // end if (LaterKernel(prev_piv, i))
+	} // end for (i = lower + 1; i <= upper; i++)
+	Swap(frames_vec, lower, pivot_loc);
+	return (pivot_loc);
+} // end method SplitAlphaKernel
+
+} // end class SynKernel
+

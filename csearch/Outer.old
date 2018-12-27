@@ -1,0 +1,130 @@
+/*
+  Beth Randall:  August 2000
+  Outer.java
+  Code to deal with output files.
+*/
+package csearch;
+
+import java.io.*;
+import java.util.*;
+import java.lang.reflect.*;
+import io.*;
+import print.*;
+import syntree.*;
+import stats.*;
+import command.*;
+import basicinfo.*;
+
+public class SentenceLoop extends Meat {
+
+    public static String prev_ID = "NO_FILE_ID";
+    public static SynTree sparse;
+
+    /*
+      thruFile -- loops through an input file, finding all parsed 
+      sentences and searching them. 
+      input -- void.
+      output -- void.
+    */
+    public static void thruFile (String file_name) {
+        SentenceResult OneResult;
+	TBToRix mytrees = new TBToRix();
+        int one_hits;
+
+	try {
+	    if (CommandInfo.multi_output) {
+		dest_name = file_name + ".out";
+		search_info = new StatsPerSearch(command_name, dest_name);
+		destination = new FileWriter(dest_name);
+		OutStuff = new PrintWriter(new BufferedWriter(destination)); 
+                PrintOut.Preface(dest_name, command_name, OutStuff, source_list); }
+	    mytrees = new TBToRix(file_name, OutStuff);
+            file_info = new StatsPerFile(file_name);
+	    PrintOut.Header(file_info.getFileID(), OutStuff);
+	    sent_loop:  do {
+		sparse = mytrees.OneSentence();
+		//sparse.PrintToSystemErr();
+		//mytrees.CorpusError();
+                if (sparse.isEmpty()) {
+                    break sent_loop;
+                }
+                Syntax.sparse = sparse;
+		Syntax.root = sparse.getRootNode();
+		//sparse.PrintToSystemErr();
+		OneResult = ParseQuery.evaluable(sparse);
+                //OneResult = SearchOne.SentenceVector(FunctionCalls);
+		//OneResult.PrintToSystemErr();
+                if (searching_output) {
+                    if (prev_ID.equals("NO_FILE_ID")) {
+                        file_info = new StatsPerFile(VectorAux.file_ID);
+                        PrintOut.Header(VectorAux.file_ID, OutStuff);
+                    }
+                    else {
+                        if (!(VectorAux.file_ID.equals(prev_ID))) {
+                            PrintOut.Footer(file_info, OutStuff);
+                            PrintOut.Header(VectorAux.file_ID, OutStuff);
+                            search_info.file_statsAdd(file_info);
+                            file_info = new StatsPerFile(VectorAux.file_ID);
+                        } // end if !file_ID.equals(prev_ID)
+                    } // end if !prev_ID.equals("NO_FILE_ID")
+		    prev_ID = VectorAux.file_ID;
+                } // end if searching_output
+
+                // Now that it's established what file-vector we're adding to,
+                // increment total.
+                file_info.totalAdd1();
+
+                if (!OneResult.isEmpty()) {
+		    if (CommandInfo.revise) {
+			Revisions.Plain(CommandInfo.tasker, OneResult); }
+		    OneResult.NoDupes();
+                    one_hits = OneResult.CountHits();
+                    file_info.hitsAdd(one_hits);
+                    file_info.tokensAdd1();
+                    UrTextStuff(sparse, OutStuff);
+                    PrintOut.Comments(OneResult, OutStuff);
+                    PrintSentence(sparse, OneResult, OutStuff);
+                    //(MeatAux.which_vector_printer).invoke(null, null);
+                } // end if !OneResult.isEmpty
+
+            } while (!sparse.isEmpty()); // end sent_loop;
+	    if (CommandInfo.multi_output) {
+                PrintOut.BigFooter(search_info, OutStuff);
+                OutStuff.flush(); }
+        } // end try
+        catch (Exception e) {
+            System.err.println("in SentenceLoop.thruFile:  ");
+            System.err.println(e.getMessage());
+            //e.printStackTrace();
+	    mytrees.CorpusError();
+            Goodbye.SearchExit();
+        } // end catch
+        finally {
+	    search_info.file_statsAdd(file_info);
+	    PrintOut.Footer(file_info, OutStuff);
+            return;
+        } // end finally
+    } // end method thruFile
+
+    /*
+      UrTextStuff -- directs printing ur_text in output files.
+      input -- PrintWriter outfile -- file in which to print.
+      output -- void.
+    */
+    public static void UrTextStuff (SynTree sparse, PrintWriter outfile) {
+
+        //	    if (ur_vec.isEmpty()) {
+        UrText.PureText(sparse, outfile);
+        return;
+        //  }
+        //else {
+        //PrintOut.StringVec(ur_vec, 0, outfile, false);
+        //return;
+        //}
+        //return;
+    } // end method UrTextStuff
+
+} // end class SentenceLoop.java
+
+
+

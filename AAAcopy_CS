@@ -1,0 +1,67 @@
+#!/bin/sh
+mkdir CSParse
+cd CSParse
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/CSParse/*.java ./.
+chmod 755 *
+cd ../
+mkdir command
+cd command
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/command/*.java ./.
+chmod 755 *
+cd ../
+mkdir convert
+cd convert
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/convert/*.java ./.
+chmod 755 *
+cd ../
+mkdir csearch
+cd csearch
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/csearch/*.java ./.
+chmod 755 *
+cd ../
+mkdir io
+cd io
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/io/*.java ./.
+chmod 755 *
+cd ../
+mkdir print
+cd print
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/print/*.java ./.
+chmod 755 *
+cd ../
+mkdir search
+cd search
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/search/*.java ./.
+chmod 755 *
+cd ../
+mkdir search_result
+cd search_result
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/search_result/*.java ./.
+chmod 755 *
+cd ../
+mkdir stats
+cd stats
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/stats/*.java ./.
+chmod 755 *
+cd ../
+mkdir stringfuss
+cd stringfuss
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/stringfuss/*.java ./.
+chmod 755 *
+cd ../
+mkdir syntree
+cd syntree
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/syntree/*.java ./.
+chmod 755 *
+cd ../
+mkdir test
+cd test
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/test/*.q ./.
+chmod 755 *
+cd ../
+cp /mnt/unagi/home/brandall/work/newCS/src/tbtools/compile ./.
+chmod 755 *
+
+
+
+

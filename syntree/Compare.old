@@ -1,0 +1,132 @@
+package search;
+
+import java.util.*;
+import basicinfo.*;
+
+/**
+ * handles tasks shared by search functions.
+ */
+
+public class Compare extends SparseMatrix {
+
+    /**
+     * checks whether input node matches an item on Vitals.ignore_list.
+     * If node is leaf_POS, also checks leaf node.
+     * @param text string found in corpus
+     * @return true if item was found on ignore_list, false otherwise
+     */
+    public static boolean ignoreIt (Node nodal) {
+        String label;
+	Node leaf;
+
+	label = nodal.getLabel();
+	if (Vitals.ignore_list.hasMatch(label)) {
+	    return true; }
+	if (super.IsLeafPOS(nodal)) {
+	    leaf = super.FirstDaughter(nodal);
+	    label = leaf.getLabel();
+	    if (Vitals.ignore_list.hasMatch(label)) {
+		return(true); } }
+        return (false); }
+
+    public static boolean IsOnList(Node nodal, ArgList argle) {
+
+	if (ignoreIt(nodal)) {
+	    return false; }
+	if (argle.hasRoot() && nodal.equals(super.ROOT)) {
+	    return true; }
+	if (argle.hasMetaroot() && nodal.equals(super.METAROOT)) {
+	    return true; }
+	return (argle.hasMatch(nodal.getLabel())); }
+
+    /**
+     * checks whether the label of the  input node
+     * is on the boundary list.
+    */
+    public static boolean IsBoundary (Node nodal) {
+
+	if (Vitals.Node_List.hasRoot() && nodal.equals(super.ROOT)) {
+	    return true; }
+	if (Vitals.Node_List.hasMetaroot() && nodal.equals(super.METAROOT)) {
+	    return true; }
+	return (Vitals.Node_List.hasMatch(nodal.getLabel())); }
+
+    /**
+     * given a node, returns a list of text words
+     * (leaves) dominated by that node.
+     */
+    public static Vector GetText(SynTree sparse, Node nodal) {
+	Vector descendants, texts = new Vector();
+	Node heir, leaf;
+        String text;
+        int n;
+      
+	descendants = sparse.GetDescendants(nodal);
+        for (n = 0; n < descendants.size(); n++) {
+            heir = (Node)descendants.elementAt(n);
+            if (sparse.IsLeafText(heir)) {
+                texts.addElement(heir.getLabel()); }
+        }
+        return texts; }
+
+    /**
+     * given a node, returns a list of text nodes
+     * dominated by the input node.
+    */
+    public static Vector GetTextNodes(SynTree sparse, Node nodal) {
+        Vector descendants, text_nodes = new Vector();
+	Node heir;
+        String text;
+        int n;
+
+	descendants = sparse.GetDescendants(nodal);
+	for (n = 0; n < descendants.size(); n++) {
+	    heir = (Node)descendants.elementAt(n);
+	    if (sparse.IsLeafText(heir)) {
+		text_nodes.addElement(heir); } }
+	return text_nodes; }
+
+    /** returns boundary for dominates functions.
+     */
+    public static Node GetBoundaryNode (SynTree sparse, Node x_node) {
+	Node forebear;
+	Vector ancestors;
+	int i;
+
+	if (IsBoundary(sparse, x_node)) { return x_node; }
+	ancestors = sparse.GetAncestors(x_node); 
+	for (i = 0; i < ancestors.size(); i++) {
+	    forebear = (Node)ancestors.elementAt(i);
+	    if (IsBoundary(sparse, forebear)) {
+		return forebear; } }
+	forebear = new Node("NULL");
+	return forebear; }
+
+    /**
+     * returns boundary for nodes x and y where x does not dominate y
+     * and y does not dominate x.
+     */
+    public static Node GetBoundaryNode (SynTree sparse, 
+					Node x_node, Node y_node) {
+	Node everymom, forebear;
+        Vector ancestors;
+	int i;
+
+	everymom = sparse.GetCommonAncestor(x_node, y_node);
+	if (IsBoundary(sparse, everymom)) {
+	    return everymom; }
+	ancestors = sparse.GetAncestors(everymom);
+	for (i = 0; i < ancestors.size(); i++) {
+	    forebear = (Node)ancestors.elementAt(i);
+	    if (IsBoundary(sparse, forebear)) {
+		return forebear; } }
+	forebear = new Node("NULL");
+	return forebear; }
+
+} 
+
+
+
+
+
+

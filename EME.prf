@@ -1,0 +1,8 @@
+corpus_comment_begin: <+
+corpus_comment_end: +>
+define: EME.def
+ignore_nodes: CODE|INTJP|LS|META|NP-VOC*|REF|,|.|'|"
+print_indices: t
+remove_nodes: t
+
+

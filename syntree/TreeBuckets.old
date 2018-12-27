@@ -1,0 +1,207 @@
+
+package syntree;
+
+import java.util.*;
+import basicinfo.*;
+
+/**
+ * saves time by bucket-sorting the label list of a tree.
+ * 
+ */
+
+public class TreeBuckets {
+
+    private BitSet has_bucket;
+
+    private Vector list;
+    private BitSet A_bucket;
+    private BitSet B_bucket;
+    private BitSet C_bucket;
+    private BitSet D_bucket;
+    private BitSet E_bucket;
+    private BitSet F_bucket;
+    private BitSet G_bucket;
+    private BitSet H_bucket;
+    private BitSet I_bucket;
+    private BitSet J_bucket;
+    private BitSet K_bucket;
+    private BitSet L_bucket;
+    private BitSet M_bucket;
+    private BitSet N_bucket;
+    private BitSet O_bucket;
+    private BitSet P_bucket;
+    private BitSet Q_bucket;
+    private BitSet R_bucket;
+    private BitSet S_bucket;
+    private BitSet T_bucket;
+    private BitSet U_bucket;
+    private BitSet V_bucket;
+    private BitSet W_bucket;
+    private BitSet X_bucket;
+    private BitSet Y_bucket;
+    private BitSet Z_bucket;
+    private BitSet other_bucket;
+
+    public TreeBuckets() {
+	this.Init(); }
+
+    private void Init() {
+	list = new Vector();
+	other_bucket = new BitSet(1);
+	list.addElement(other_bucket);
+	A_bucket = new BitSet(1);
+	list.addElement(A_bucket);
+	B_bucket = new BitSet(1);
+	list.addElement(B_bucket);
+	C_bucket = new BitSet(1);
+	list.addElement(C_bucket);
+	D_bucket = new BitSet(1);
+	list.addElement(D_bucket);
+	E_bucket = new BitSet(1);
+	list.addElement(E_bucket);
+	F_bucket = new BitSet(1);
+	list.addElement(F_bucket);
+	G_bucket = new BitSet(1);	
+	list.addElement(G_bucket);
+	H_bucket = new BitSet(1);	
+	list.addElement(H_bucket);
+	I_bucket = new BitSet(1);
+	list.addElement(I_bucket);
+	J_bucket = new BitSet(1);
+	list.addElement(J_bucket);
+	K_bucket = new BitSet(1);
+	list.addElement(K_bucket);
+	L_bucket = new BitSet(1);
+	list.addElement(L_bucket);
+	M_bucket = new BitSet(1);
+	list.addElement(M_bucket);
+	N_bucket = new BitSet(1);
+	list.addElement(N_bucket);
+	O_bucket = new BitSet(1);
+	list.addElement(O_bucket);
+	P_bucket = new BitSet(1);
+	list.addElement(P_bucket);
+	Q_bucket = new BitSet(1);
+	list.addElement(Q_bucket);
+	R_bucket = new BitSet(1);
+	list.addElement(R_bucket);
+	S_bucket = new BitSet(1);
+	list.addElement(S_bucket);
+	T_bucket = new BitSet(1);
+	list.addElement(T_bucket);
+	U_bucket = new BitSet(1);
+	list.addElement(U_bucket);
+	V_bucket = new BitSet(1);
+	list.addElement(V_bucket);
+	W_bucket = new BitSet(1);
+	list.addElement(W_bucket);
+	X_bucket = new BitSet(1);
+	list.addElement(X_bucket);
+	Y_bucket = new BitSet(1);
+	list.addElement(Y_bucket);
+	Z_bucket = new BitSet(1);
+	list.addElement(Z_bucket);
+	has_bucket = new BitSet(list.size()); }
+
+    public int size() {
+	return list.size(); }
+
+    public int hasBucketSize() {
+	return (has_bucket.size()); }
+
+    public boolean hasBucketGet(int i) {
+	return (has_bucket.get(i)); }
+
+    public BitSet bucketAt(int i) {
+	return (BitSet)list.elementAt(i); }
+
+    public boolean fullBucket(int i) {
+	return (has_bucket.get(i)); }
+
+    public void removeAllElements() {
+	for (int i = 0; i < this.size(); i++) {
+	    if (has_bucket.get(i)) {
+		((BitSet)list.elementAt(i)).clear(); 
+		has_bucket.clear(i); } }
+    }		
+
+    public void addToBucket(String str, int dex) {
+	int num;
+	BitSet newbits;
+
+	if (str.equals("")) { return; }
+	num = getASCIIforMatch(str);
+	newbits = new BitSet(dex + 1);
+	newbits.set(dex);
+	newbits.or((BitSet)list.elementAt(num));
+	list.setElementAt(newbits, num);
+	has_bucket.set(num); }
+    /*
+    public boolean hasMatch(String str) {
+	int num;
+
+	if (str.equals("")) {
+	    return false; }
+	num = getASCIIforMatch(str);
+	if (has_bucket.get(num)) {
+	    return isInBucket(str, num); }
+	return false; }
+    */
+    /*
+    private boolean isInBucket(String str, int num) {
+	String buck_str;
+	BitSet buck = (BitSet)list.elementAt(num); 
+
+	for (int i = 0; i < buck.size(); i++) {
+	    if (buck.get(i)) {
+		buck_str = super.LabelAt(i);
+		if (Matcher.StarMatch(buck_str, str)) {
+		    return true; } } }
+	return false; }
+    */
+
+    /**
+     *  There are two versions of getting the ASCII number because the character
+     * "*" means different things in different places.  When found in the corpus, 
+     * "*" is a character like any other.  When found in a query, "*" is the wildcard.
+     *
+     *  This version of "getASCII" is used for corpus elements, not query elements.
+    */
+    public int getASCIIforMatch(String text_str) {
+        Character charlie = new Character('Q');
+        int num;
+        char init;
+
+        init = text_str.charAt(0);
+        init = charlie.toUpperCase(init);
+	if (init < 'A' || init > 'Z') {
+	    num = 0; }
+	else {
+	    num = (int)init - 64; }
+        return num; }
+    /*
+    public void PrintToSystemErr() {
+	BitSet buck;
+	Node nodal;
+	int i, j;
+
+	for (i = 0; i < has_bucket.size(); i++) {
+	    if (has_bucket.get(i)) {
+		buck = (BitSet)list.elementAt(i);
+		System.err.print(i + ".)  ");
+		for (j = 0; j < buck.size(); j++) {
+		    if (buck.get(j)) {
+			nodal = super.NodeAt(j);
+			System.err.print(nodal.toString());
+			if (j < buck.size() - 1) {
+			    System.err.print("|"); } } }
+		System.err.println(""); } }
+	return; }
+    */
+} 
+
+
+
+
+
+

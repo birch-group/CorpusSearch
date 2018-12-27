@@ -1,0 +1,286 @@
+package syntree;
+
+import java.io.*;
+import java.util.*;
+
+public class SparseMatrix {
+
+    private Vector label_vec;
+    private Vector end_vec;
+    private Integer minus1 = new Integer(-1);
+    //protected TreeBuckets buckt; 
+
+    public SparseMatrix () {
+	Init(); }
+
+    //  to generate a sample matrix.  Called like this:
+    //    sparse = new SynTree("EXAMPLE");
+    public SparseMatrix (String Example) {
+	Init();
+        this.setSample();
+        return; }
+
+    public void setSample() {
+        String labels, indices;
+
+        labels = "IP-MAT CONJ(And ADVP(ADV(so PP P(by NP(NS(meanes NP-SBJ ";
+        labels += "NPR(kynge NPR(Uther VBD(send PP P(for NP D(this N(duk ";
+        labels += "IP-PPL VAG(chargyng NP-OB1(PRO(hym IP-INF TO(to VB(brynge";
+        labels += " NP-OB1 PRO$(his N(wyf PP P(with NP(PRO(hym E_S(, ";
+        labels += "ID(CMMALORY,2.8";
+        indices = "50 2 5 11 8 11 16 14 16 18 26 21 26 24 26 48 29 32 48 ";
+        indices += "35 37 42 40 42 48 45 48 50 52";
+        this.buildFromStrings(labels, indices);
+        return; }
+
+    public void setSparseMatrix(SynTree spaz) {
+	label_vec = spaz.GetLabelVector();
+	end_vec = spaz.GetEndVector();
+	return; }
+
+    private void Init() {
+	label_vec = new Vector();
+        end_vec = new Vector();
+	//buckt = new TreeBuckets();
+	return; }
+
+    public Vector GetLabelVector() {
+	return (this.label_vec); }
+
+    public Vector GetEndVector() {
+	return(end_vec); }
+
+    public void setLabelVector(Vector new_label_vec) {
+	this.label_vec = new_label_vec;
+	return; }
+
+    public void setEndVector(Vector new_end_vec) {
+	this.end_vec = new_end_vec;
+	return; }
+
+    public void buildFromStrings(String labels, String indices) {
+
+        this.space_split(labels, label_vec, false);
+        this.space_split(indices, end_vec, true);
+        //this.CorrectParens();
+        return; }
+
+    public void space_split (String to_split, Vector to_store, 
+			     boolean to_Int) {
+        int prev_dex, space_dex;
+        Integer dex;
+        String item;
+
+        prev_dex = 0;
+        while (prev_dex < to_split.length()) {
+            space_dex = to_split.indexOf(" ", prev_dex);
+            if (space_dex < 0) {
+                item = to_split.substring(prev_dex, to_split.length());
+                if (to_Int) {
+                    dex = new Integer(item);
+                    to_store.addElement(dex); }
+                else { to_store.addElement(item); }
+                break;
+            }
+            item = to_split.substring(prev_dex, space_dex);
+            if (to_Int) {
+                dex = new Integer(item);
+                to_store.addElement(dex); }
+            else { to_store.addElement(item); }
+            prev_dex = space_dex + 1;
+        } // end while
+        return;
+    } // end method space_split
+
+    public boolean isEmpty() {
+        return(label_vec.isEmpty()); }
+
+    public void RemoveAllElements () {
+        label_vec.removeAllElements();
+        end_vec.removeAllElements();
+	//buckt.removeAllElements();
+        return; }
+
+    public int size () {
+        return(label_vec.size()); }
+
+
+    public void addWrapper() {
+	Integer new_end = new Integer(label_vec.size()), old_end;
+	int i;
+
+	label_vec.insertElementAt("", 0);
+	end_vec.insertElementAt(new_end, 0);
+	for (i = 1; i < end_vec.size(); i++) {
+	    old_end = (Integer)end_vec.elementAt(i);
+	    new_end = new Integer(old_end.intValue() + 1);
+	    end_vec.setElementAt(new_end, i); }
+	return; }
+    /*
+      returns e.g. [1, IP-MAT], where 1 is the start_index 
+          and IP-MAT is the label.  
+    */
+    public Node NodeAt (Integer x) {
+	    return(new Node(x, this.LabelAt(x))); }
+
+    /*
+      returns e.g. [1, IP-MAT], where 1 is the start_index 
+          and IP-MAT is the label.  
+    */
+    public Node NodeAt (int x) {
+        Integer index = new Integer(x);
+        return (NodeAt(index)); }
+
+    public void SetLabelAt(String label, int x) {
+	while (x >= label_vec.size()) {
+	    label_vec.addElement("_"); }
+        label_vec.setElementAt(label, x); }
+
+    public void SetLabelAt(String label, Integer x_Int) {
+	SetLabelAt(label, x_Int.intValue()); }
+
+    public void SetEndDexAt(Integer dex, int x) {
+	while (x >= end_vec.size()) {
+	    end_vec.addElement(minus1); }
+        end_vec.setElementAt(dex, x); }
+
+    public void SetEndDexAt (int dex, int x) {
+	Integer dex_Int = new Integer(dex);
+	SetEndDexAt(dex_Int, x); }
+
+    public void SetEndDexAt (Integer dexInt, Integer xInt) {
+	SetEndDexAt(dexInt, xInt.intValue()); }
+
+    public String LabelAt (int x) {
+        return ((String)label_vec.elementAt(x)); }
+
+    public String LabelAt (Integer x) {
+        return(this.LabelAt(x.intValue())); }
+
+    public int intEndDexAt (int x) {
+	return((this.EndDexAt(x)).intValue()); }
+
+    public int intEndDexAt (Integer x) {
+	return(this.intEndDexAt(x.intValue())); }
+
+    public Integer EndDexAt (Integer x) {
+        return(this.EndDexAt(x.intValue())); }
+
+    public Integer EndDexAt (int x) {
+        if (x >= end_vec.size() || x < 0) {
+            return (minus1); }
+        return((Integer)end_vec.elementAt(x)); }
+
+    public void AddItem (String new_label, Integer new_end_dex) {
+        label_vec.addElement(new_label);
+        end_vec.addElement(new_end_dex);
+        return; }
+
+    public void AddItem(String new_label, int dex) {
+	Integer dex_Int = new Integer(dex);
+
+	AddItem(new_label, dex_Int); }
+
+    public void InsertItem (String label, Integer end_dex, int where) {
+        label_vec.insertElementAt(label, where);
+        end_vec.insertElementAt(end_dex, where);
+        return; }
+
+    public void insertNode (String label, Integer end_dex, int where) {
+        label_vec.insertElementAt(label, where);
+        end_vec.insertElementAt(end_dex, where);
+        return; }
+
+    public void insertNode (String label, int end_dex, int where) {
+	Integer endd = new Integer(end_dex);
+	insertNode(label, endd, where); }
+
+    public void AddLabel (String label) {
+        label_vec.addElement(label);
+	//buckt.addToBucket(label, label_vec.size() - 1);
+        return; }
+
+    public void AddDex (Integer x) {
+        try {
+            end_vec.addElement(x); }
+        catch (Exception e) {
+            System.err.println("in SparseMatrix: AddDex:  ");
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+            System.exit(0); }
+        finally { return; } }
+
+    public void AddDex (int x) {
+        Integer new_x = new Integer(x);
+        this.AddDex(new_x);
+        return; }
+
+    public void AddDex (String dex_str) {
+        try {
+            Integer Int_str = new Integer(Integer.parseInt(dex_str));
+            this.AddDex(Int_str); }
+        catch (Exception e) {
+            System.err.print("in SparseMatrix.AddDex:  ");
+            System.err.print("could not parse to Int: ");
+            System.err.println(dex_str);
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+            System.exit(0); }
+        finally { return; } }
+
+    public void deleteNode (int index) {
+	end_vec.removeElementAt(index);
+	label_vec.removeElementAt(index); }
+
+
+    /* checks whether current sparse matrix is well formed.  */
+    public boolean Verify () {
+        if (end_vec.size() != label_vec.size()) {
+            System.err.print("ERROR!  label_vec and end_vec ");
+            System.err.println("not the same size:");
+            System.err.print("label_vec.size, end_vec.size:  ");
+            System.err.println(label_vec.size() + ", " + end_vec.size());
+            return false; }
+        else
+            { return true; } }
+
+    public void PrintToPrintWriter (PrintWriter outrage) {
+        int j;
+
+        for (j = 0; j < this.size(); j++) {
+            outrage.print(this.LabelAt(j) + " "); }
+        outrage.println("");
+        for (j = 0; j < this.size(); j++) {
+            outrage.print((this.EndDexAt(j)).toString() + " "); }
+        outrage.println("");
+        outrage.println("");
+        outrage.flush();
+        return; }
+
+
+    public void PrintToSystemErr() {
+	if (this.isEmpty()) {
+	    System.err.println("sparse matrix is empty"); }
+	PrintToSystemErr(0, this.size()); }
+
+    public void PrintToSystemErr (int start, int end) {
+	
+	if (start < 0) { start = 0; }
+	if (end > this.size()) { end = this.size(); }
+        for (int j = start; j < end; j++) {
+            System.err.print(j + ".  " + this.LabelAt(j) + " ");
+	    System.err.println((this.EndDexAt(j)).toString());  }
+        return; }
+
+    public static void main (String[] args) {
+        SparseMatrix sparse = new SparseMatrix("EXAMPLE");
+        sparse.PrintToSystemErr();
+        return; }
+
+}
+
+
+
+
+
+

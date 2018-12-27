@@ -1,0 +1,230 @@
+/*
+ * Copyright © 2002 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+ * California 95054, U.S.A. All rights reserved.  Sun Microsystems, Inc. has
+ * intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation,
+ * these intellectual property rights may include one or more of the U.S.
+import  * patents listed at http://www.sun.com/patents and one or more additional
+ * patents or pending patent applications in the U.S. and in other countries.
+ * U.S. Government Rights - Commercial software. Government users are subject
+ * to the Sun Microsystems, Inc. standard license agreement and applicable
+ * provisions of the FAR and its supplements.  Use is subject to license terms.
+ * Sun,  Sun Microsystems,  the Sun logo and  Java are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries.  This
+ * product is covered and controlled by U.S. Export Control laws and may be
+ * subject to the export or import laws in other countries.  Nuclear, missile,
+ * chemical biological weapons or nuclear maritime end uses or end users,
+ * whether direct or indirect, are strictly prohibited.  Export or reexport
+ * to countries subject to U.S. embargo or to entities identified on U.S.
+ * export exclusion lists, including, but not limited to, the denied persons
+ * and specially designated nationals lists is strictly prohibited.
+ */
+
+PARSER_BEGIN(ParseFrames)
+
+package FramesParse;
+
+import java.util.*;
+import java.io.*;
+
+import basicinfo.*;
+import frames.*;
+import syntree.*;
+
+abstract class FramesNode {
+    public abstract SentenceFrame evaluate(SynTree sparse);
+    public abstract void PrintToSystemErr();
+}
+
+class ArgNode{
+     String args;
+     Vector args_for_search;
+
+    public ArgNode(String argo) {
+	this.args = argo;
+	this.args_for_search = PipeList.MakeList(this.args);
+	//this.PrintToSystemErr(); }
+    }
+
+    public void PrintToSystemErr() {
+        System.err.println("ArgNode:  ");
+	System.err.println(args_for_search); }
+}
+
+abstract class BinarySearchNode extends FramesNode {
+    ArgNode arg1, arg2;
+    Vector x_List, y_List;
+
+    protected BinarySearchNode() {}
+
+    protected BinarySearchNode(ArgNode arg1, ArgNode arg2)
+        { Init(arg1, arg2); }
+
+    protected void Init(ArgNode arg1, ArgNode arg2) {
+        this.arg1 = arg1;
+        this.arg2 = arg2;
+        this.x_List = arg1.args_for_search;
+        this.y_List = arg2.args_for_search;
+        //this.PrintToSystemErr(); }
+    }
+
+    public void PrintToSystemErr () {
+        System.err.println("in BinarySearchNode:  ");
+        System.err.println("x_List:  " + x_List);
+        System.err.println("y_list:  " + y_List); }
+}
+
+class OverNode extends BinarySearchNode { // used for local frames.
+
+    public OverNode (ArgNode arg1, ArgNode arg2) {
+        super.Init(arg1, arg2); }
+    
+    public SentenceFrame evaluate(SynTree sparse) {
+       return (BuildFrames.OneSentence(x_List, y_List)); }
+}
+
+public class ParseFrames {
+    private static FramesNode qn;
+
+    public static void main(String args[]) throws ParseException {
+      System.err.println("BULLWINKLE!  using new parser:  Enter query: ");
+      ParseFrames parser = new ParseFrames(System.in);
+      FramesNode qn = parser.Atom_Stmt();
+      SynTree sparse = new SynTree();
+      SentenceFrame sr = qn.evaluate(sparse);
+      sr.PrintToSystemErr();
+      System.err.println("Parsed OK.");
+    }
+
+    public static void makeFramesTree(StringReader sread) 
+	       throws ParseException {
+      ParseFrames parser = new ParseFrames(sread);
+      qn = parser.Atom_Stmt();
+      FlushQuery();
+      return ;
+    }
+
+    public static SentenceFrame evaluable (SynTree sparse) {
+      return (qn.evaluate(sparse)); }
+}
+
+PARSER_END(ParseFrames)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+SKIP :
+{  "/*" : WithinComment }
+<WithinComment> SKIP :
+{  "*/" : DEFAULT }
+
+TOKEN :
+{
+  < OPEN_PAREN: "(" >
+| < CLOSE_PAREN: ")" >
+| < OVER: "Over"|"over" >
+}
+
+TOKEN : /* Search-function arguments*/
+{
+  < ARG: (<LETTER>|<DIGIT>|<WCARD>|<DASH>|<BSLASH>|<PIPE>|<BSLASH>|<NUM>|<EQ>|<SQUOTE>|<PLUS>|<TILDE>)+ >
+| < #LETTER:
+      [
+       "\u0024",
+       "\u0041"-"\u005a",
+       "\u005f",
+       "\u0061"-"\u007a",
+       "\u00c0"-"\u00d6",
+       "\u00d8"-"\u00f6",
+       "\u00f8"-"\u00ff",
+       "\u0100"-"\u1fff",
+       "\u3040"-"\u318f",
+       "\u3300"-"\u337f",
+       "\u3400"-"\u3d2d",
+       "\u4e00"-"\u9fff",
+       "\uf900"-"\ufaff"
+      ]
+  >
+| < #DIGIT:
+      [
+       "\u0030"-"\u0039",
+       "\u0660"-"\u0669",
+       "\u06f0"-"\u06f9",
+       "\u0966"-"\u096f",
+       "\u09e6"-"\u09ef",
+       "\u0a66"-"\u0a6f",
+       "\u0ae6"-"\u0aef",
+       "\u0b66"-"\u0b6f",
+       "\u0be7"-"\u0bef",
+       "\u0c66"-"\u0c6f",
+       "\u0ce6"-"\u0cef",
+       "\u0d66"-"\u0d6f",
+       "\u0e50"-"\u0e59",
+       "\u0ed0"-"\u0ed9",
+       "\u1040"-"\u1049"
+      ]
+  >
+| < #WCARD: [ "*" ] >
+| < #DASH: [ "-" ] >
+| < #PIPE: [ "|" ] >
+| < #BSLASH: [ "\\" ] >
+| < #NUM: [ "#" ] >
+| < #EQ: [ "=" ] >
+| < #SQUOTE: ["'"] >
+| < #PLUS: [ "+" ] >
+| < #TILDE: [ "~" ] >
+}
+
+/*
+This causes an error message to be printed
+in case of an unknown token.
+*/
+TOKEN:
+{ <UNKNOWN: ~[] > }
+
+void FlushQuery() :
+{ }
+{   <EOF> { return; }  }
+
+FramesNode Atom_Stmt():
+{
+    FramesNode qn;
+    ArgNode arg1;
+}
+{
+   <OPEN_PAREN>qn=Atom_Stmt()<CLOSE_PAREN>
+        { return qn; }
+  | arg1=Arg() qn=UnBinTriCall(arg1)
+        { return qn; }
+}
+
+FramesNode UnBinTriCall(ArgNode arg1):
+{
+   FramesNode qn;
+   Token sf_token=null;
+   ArgNode arg2;
+}
+{
+// Binary Call.
+    sf_token=<OVER> arg2=Arg()
+        { return new OverNode(arg1, arg2); }
+}
+
+ArgNode Arg():
+{
+    ArgNode an;
+    Token sf_token=null;
+    String sf_name;
+}
+{
+    sf_token=<ARG> {
+        sf_name = sf_token.toString();
+        an = new ArgNode(sf_name);
+        return an; }
+}
+

@@ -1,0 +1,203 @@
+/*
+	Beth Randall:  Jan 2001
+	BuildFrames.java
+	builds frames_vec (containing subcat framesinformation) from
+	one sentence vector.
+*/
+
+import java.io.*;
+import java.util.*;
+
+public class BuildFrames extends FileInfo {
+
+private static Vector prev_phrases = new Vector();
+
+/*
+	OneSentence -- builds sub-cat frame for one sentence.
+	input -- x_List.
+		 y_List
+	output -- void.
+*/
+public static void OneSentence (Vector x_List, Vector y_List) {
+
+	subFrames(FileInfo.sent_vec, x_List, y_List); 
+//System.err.println(frames_vec);
+
+	return;
+} // end method OneSentence
+
+/*
+	subFrames -- recursively called part of BuildFrames.OneSentence.
+		Looks for input structure (x_List iDoms y_List), and
+		if found adds vector to frames_vec.
+	input -- phrase_vec --  vector to be searched.
+		x_List -- list of x-arguments.
+		y_List -- list of y-arguments.
+	output -- void.
+*/
+public static void subFrames(Vector phrase_vec, Vector x_List, 
+Vector y_List) {   
+	Vector one_item, curr_vec, sub_sister, sister, syn_kernel;
+	String text = "", label = "", sis_label = "", 
+		sis_txt = "", mama_label = "", prep = "" ;
+	int k, n, p, q; // loop indices.
+	int phr_siz, sub_siz, one_siz;
+	Vector one_frame, mama;
+	boolean recursive = false;
+
+try {
+phr_siz = phrase_vec.size();
+mama = (Vector)phrase_vec.elementAt(0);
+if (mama.size() > 1) {
+	mama_label = (String)mama.elementAt(1);
+}
+for (n = 1; n < phr_siz; n++) {
+	curr_vec = (Vector)phrase_vec.elementAt(n);
+	if (curr_vec.size() > 1) {
+		subFrames(curr_vec, x_List, y_List);
+	}
+	else { // word vector.
+	legit_loop: if (true) {
+	one_item = (Vector)curr_vec.elementAt(0);
+	one_siz = one_item.size();
+	for (q = 1; q < one_siz; q++) {
+		text = (String)one_item.elementAt(q);
+		if (!Syntax.IsLegit(text)) {
+			break legit_loop;	
+		}
+	} // end for q = 1; q < one_item.size; q++
+	label = (String)one_item.elementAt(1);
+	if (Syntax.IsOnList (label, x_List)) {
+	text = (String)one_item.elementAt(2);
+	if (Syntax.IsOnList(text, y_List)) {
+// build vector out of the sisters of one_item
+		one_frame = new Vector();
+		syn_kernel = new Vector();
+		one_frame.addElement(syn_kernel);
+		recursive = false;
+		k_loop2:  for (k = 1; k < phr_siz; k++) {
+			sister = (Vector)phrase_vec.elementAt(k);
+			sub_sister = (Vector)sister.elementAt(0);
+			sub_siz = sub_sister.size();
+			for (p = 1; p < sub_siz; p++) {
+				sis_txt = (String)sub_sister.elementAt(p);
+				if (!Syntax.IsLegit(sis_txt)) {
+                                	continue k_loop2;
+				}
+			} /// end for p = 1; p < sub_sister.size; p++
+			sis_label = (String)sub_sister.elementAt(1);
+			if (sis_label.equals(mama_label)) {
+				recursive = true;
+			}
+			if (Syntax.IsOnList (sis_label, 
+			CommandInfo.syn_kernel_vec)) {
+				syn_kernel.addElement(sis_label);
+			}
+			if (k == n) {
+				sis_txt = (String)sub_sister.elementAt(2);
+				one_frame.addElement(sis_label + " " 
+						+ sis_txt); 
+				syn_kernel.addElement(sis_label + " " 
+						+ sis_txt); 
+				continue k_loop2;
+			}	
+			if (sis_label.equals("PP")) {
+				prep = GetPrep(sister);
+				one_frame.
+				addElement(sis_label + "(" + prep + ")");
+				continue k_loop2;
+			}
+			one_frame.addElement(sis_label);
+		} // end for k = 1; k < phrase_vec.size();
+		one_frame.addElement(ID_str);
+		if (recursive) {
+			one_frame = GetAunts(one_frame, mama);
+		}
+		frames_vec.addElement(one_frame);
+	} // end if IsOnList(text, y_List)
+	} // end if IsOnList(label, x_List)
+	} // end legit_loop;
+} // end else 
+} // end for (n = 1; n < phrase_vec.size()
+} // end try
+catch (ArrayIndexOutOfBoundsException e) {
+System.err.println("in BuildFrames.subFrame:  ");
+System.err.println(e.getMessage());
+System.err.println("frames_vec:  " + frames_vec);
+}
+finally {
+	return ;
+}
+} // end subFrames
+
+/*
+	GetPrep -- gets preposition from preposition phrase.
+	input -- Vector pp -- prepositional phrase.
+	output -- String prep -- preposition, e.g., "in", "under", etc.
+*/
+public static String GetPrep (Vector pp) {
+	Integer zero = new Integer(0);
+	Vector sub_vec, sub_sub_vec;
+	String label = "";
+	int i;	
+
+	for (i = 1; i < pp.size(); i++) {
+		sub_vec = (Vector)pp.elementAt(i);
+		sub_sub_vec = (Vector)sub_vec.elementAt(0);
+		label = (String)sub_sub_vec.elementAt(1);
+		if (label.equals("P")) {
+			return ((String)sub_sub_vec.elementAt(2));
+		} 
+	}
+	return ("NOTFOUND");
+} // end method GetPrep
+
+
+/*
+	GetAunts -- gets aunts for one_frame.  Called in case of
+		recursive node.
+	input -- one_frame
+		mama
+	output -- Vector one_frame
+*/
+public static Vector GetAunts(Vector one_frame, Vector mama) {
+	int mama_dex, aunt_dex, i, j;
+	Vector grandma, sub_ma, sub_sub_ma;
+	Vector new_frame = new Vector();
+	Vector new_kernel = new Vector();
+	String aunt, sister;
+
+	mama_dex = ((Integer)mama.elementAt(0)).intValue();
+	grandma = (Vector)mother_vec.elementAt(mama_dex);
+	new_frame.addElement(one_frame.elementAt(0));
+	for (i = 1; i < grandma.size(); i++) {
+		sub_ma = (Vector)grandma.elementAt(i);
+		sub_sub_ma = (Vector)sub_ma.elementAt(0);
+		aunt_dex = ((Integer)sub_sub_ma.elementAt(0)).intValue();
+		aunt = (String)sub_sub_ma.elementAt(1);
+		new_frame.addElement(aunt);
+		if (Syntax.IsOnList (aunt, CommandInfo.syn_kernel_vec)) {
+                	new_kernel.addElement(aunt);
+                }
+		if (aunt_dex == mama_dex) {
+			new_kernel.addElement(aunt);
+			for (j = 1; j < one_frame.size() - 1; j++) {
+				sister = (String)one_frame.elementAt(j);
+				if (j == 1) {
+					sister = "(" + sister;
+				}
+				if (j == one_frame.size() - 2) {
+					sister += ")";
+				}	
+				new_frame.addElement(sister);
+			} // end for j = 1; j < one_frame.size(); j++
+		} // end if aunt_dex == mama_dex
+	} // end for i = 1; i < grandma.size();
+	new_frame.addElement(one_frame.elementAt(one_frame.size() - 1));
+	new_frame.setElementAt(new_kernel, 0);
+	return(new_frame);
+} // end method GetAunts
+	
+} // end class Printout
+
+

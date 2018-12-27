@@ -1,0 +1,642 @@
+/*
+*/
+package syntree;
+
+import java.io.*;
+import java.util.*;
+import basicinfo.*;
+
+/**
+This class contains all the methods for navigating a syntactic tree, 
+instantiated by a SparseMatrix object.
+*/
+public class SynTree extends SparseMatrix {
+    public Node ROOT;
+    public Node METAROOT;
+    public Node ID_POS;
+    public Node ID_TEXT;
+
+    public SynTree () { }
+
+    public SynTree(String Example) {
+        super.setSample(); }
+
+    /**
+       finds descendants of one node.
+       @param mom-start-dex index of mother node.
+       @return list of descendant Nodes.
+    */
+    public Vector GetDescendants (Integer mom_start_dex) {
+        Node one_daughter;
+        Vector daughters = new Vector();
+        int n, mom_end_dex_int;
+
+        mom_end_dex_int = (super.EndDexAt(mom_start_dex)).intValue();
+        for (n = mom_start_dex.intValue() + 1; n <= mom_end_dex_int; n++) {
+            one_daughter = super.NodeAt(n);
+            daughters.addElement(one_daughter); }
+        return daughters; }
+
+    /**
+       @param nodal mother node.
+       @return list of descendant Nodes.
+    */
+    public Vector GetDescendants (Node nodal) {
+	Integer dex = nodal.getIndex();
+	return(GetDescendants(dex)); }
+
+    /**
+       @param n index of mother node.
+       @return list of descendant Nodes.
+    */
+    public Vector GetDescendants (int n) {
+	Integer n_Int = new Integer(n);
+	return (GetDescendants(n_Int)); }
+
+    /** 
+	@param your_mom index of mother node.
+	@return list of daughter Nodes.
+    */
+    public Vector GetDaughters (int your_mom) {
+        Integer mom_start_dex = new Integer(your_mom);
+        return(GetDaughters(mom_start_dex)); }
+
+    /** 
+	@param mom_node mother node.
+	@return list of daughter Nodes.
+    */
+    public Vector GetDaughters (Node mom_node) {
+        Integer mom_start_dex = mom_node.getIndex();
+        return (GetDaughters(mom_start_dex)); }
+
+    /**
+       @param mom_start_dex index of mother node.
+       @return list of daughter Nodes.
+    */
+    public Vector GetDaughters (Integer mom_start_dex) {
+        Node one_daughter;
+        Vector daughters = new Vector();
+        Integer curr_end_dex = new Integer(0), prev_end_dex;
+        int n, mom_end_dex_int;
+
+        mom_end_dex_int = (super.EndDexAt(mom_start_dex)).intValue();
+        for (n = mom_start_dex.intValue() + 1; n <= mom_end_dex_int; n++) {
+            prev_end_dex = curr_end_dex;
+            curr_end_dex = super.EndDexAt(n);
+            one_daughter= super.NodeAt(n);
+            if (!(curr_end_dex.equals(prev_end_dex)) ||
+                    (this.IsLeafPOS(curr_end_dex))) {
+                daughters.addElement(one_daughter); }
+            if (curr_end_dex.intValue() > n + 1) {
+                n = curr_end_dex.intValue() - 1; }
+        } 
+        return daughters; }
+
+    /**
+       @param mom_start_dex index of mother.
+       @return first daughter node.
+    */
+    public Node FirstDaughter (Integer mom_start_dex) {
+	if (this.IsLeafText(mom_start_dex) 
+	    || mom_start_dex.intValue() < 0) {
+	    return (new Node("NULL")); }
+        return(super.NodeAt(mom_start_dex.intValue() + 1)); }
+
+    /**
+       @param mom_node mother node.
+       @return first daughter Node.
+    */
+    public Node FirstDaughter (Node mom_node) {
+        Integer mom_dex = mom_node.getIndex();
+        return (FirstDaughter(mom_dex)); }
+
+    /**
+       @param mom_int index of mother node.
+       @return first daughter node.
+    */
+    public Node FirstDaughter(int mom_int) {
+	Integer mom_dex = new Integer(mom_int);
+	return (FirstDaughter(mom_dex)); }
+
+    /**
+       @param x index of daughter node.
+       @return mother node.
+    */
+    public Node GetMother (int x) {
+	Integer dex = new Integer(x);
+	return (this.GetMother(dex)); }
+
+    /**
+       @param nodal daughter node.
+       @return mother node.
+    */
+    public Node GetMother (Node nodal) {
+	Integer dex = nodal.getIndex();
+	return (this.GetMother(dex)); }
+					
+    /**
+      @param dex index of daughter node.
+      @return mother node.
+    */
+    public Node GetMother (Integer dex) {
+        Node mother, negative;
+        Integer mom_dex, mom_end_dex, orig_end;
+        String mom_label;
+
+        orig_end = super.EndDexAt(dex);
+        mom_dex = dex;
+        while (mom_dex.intValue() > 0) {
+            mom_dex = new Integer(mom_dex.intValue() - 1);
+            //System.err.println("mom_dex:  " + mom_dex);
+            mom_end_dex = super.EndDexAt(mom_dex);
+            if (mom_end_dex.intValue() >= orig_end.intValue()) {
+                mother = super.NodeAt(mom_dex);
+                return (mother); }
+        } 
+        negative = new Node("NULL");
+        return (negative); }
+
+    /**
+      returns ancestors in order from source to root.
+      @param nodal daughter node
+      @return list of ancestor Nodes.
+    */
+    public Vector GetAncestors (Node nodal) {
+	Node mom;
+	Vector ancestors = new Vector();
+	
+	mom = nodal;
+	while (!mom.IsNullNode()) {
+	    mom = this.GetMother(mom);
+	    if (!mom.IsNullNode()) {
+		ancestors.addElement(mom); }
+	}
+	return ancestors; }
+	
+    /**
+       returns ancestors in order from source to root.
+       @param n int index of daughter.
+       @return list of ancestor nodes.
+    */
+    public Vector GetAncestors (int n) {
+	Node nodal;
+
+	nodal = super.NodeAt(n);
+	return (GetAncestors(nodal)); }
+	
+    /**
+       returns least common ancestor of input Nodes.
+       @param node1 first node
+              node2 second node
+       @return least common ancestor.
+    */
+    public Node GetCommonAncestor (Node node1, Node node2) {
+	Integer first, second;
+	return (GetCommonAncestor(node1.getIndex(), node2.getIndex())); }
+
+    /**
+       @param int1 int index of first node.
+              int2 int index of second node.
+       @return least common ancestor node.
+    */
+    public Node GetCommonAncestor (int int1, int int2) {
+	Integer dex1 = new Integer(int1);
+	Integer dex2 = new Integer(int2);
+	return (GetCommonAncestor(dex1, dex2)); }
+
+    /**
+       @param dex1 Integer index of first node.
+              dex2 Integer index of second node.
+       @return least common ancestor.
+    */
+    public Node GetCommonAncestor (Integer dex1, Integer dex2) {
+	Vector mom1_list = new Vector();
+	Node mom1, mom2, fruitless;
+	int i;
+
+	mom1 = this.GetMother(dex1);
+	while (!mom1.IsNullNode()) {
+	    mom1_list.addElement(mom1);
+	    mom1 = this.GetMother(mom1); }
+	mom2 = this.GetMother(dex2);
+	while (!mom2.IsNullNode()) {
+	    for (i = 0; i < mom1_list.size(); i++) {
+		if (mom2.equals((Node)mom1_list.elementAt(i))) {
+		    return mom2; } }
+	    mom2 = this.GetMother(mom2); }
+	fruitless = new Node("NULL");
+	return fruitless; }
+
+    /**
+       returns subsequent sisters of input node.
+       @param nodal sister Node
+       @return list of subsequent sister Nodes.
+    */
+    public Vector GetSisters (Node nodal) {
+	return (GetSisters(nodal.getIndex_int())); }
+
+    /** 
+	@param nInt Integer index of sister node.
+	@return list of subsequent sister Nodes.
+    */
+    public Vector GetSisters (Integer nInt) {
+	return(GetSisters(nInt.intValue())); }
+
+    /**
+       @param int index of sister node.
+       @return list of subsequent sister Nodes.
+    */
+    public Vector GetSisters (int dex) {
+        Vector sisters = new Vector();
+        int sis_dex, mom_dex, mom_end_dex;
+        Node one_sister, mother;
+
+        mother = this.GetMother(dex);
+        mom_dex = mother.getIndex_int();
+	if (mom_dex == -1) { return sisters; }
+        mom_end_dex = super.intEndDexAt(mom_dex);
+        sis_dex = super.intEndDexAt(dex) + 1;
+        while (sis_dex <= mom_end_dex) {
+            one_sister = super.NodeAt(sis_dex);
+            sisters.addElement(one_sister);
+            sis_dex = super.intEndDexAt(sis_dex) + 1; }
+        return (sisters); }
+
+    /**
+       @param n index of sister node.
+       @return list of all children Nodes of input node's mother.
+    */
+    public Vector GetAllSisters (int n) {
+        Integer n_Int = new Integer(n);
+        return(GetAllSisters(n_Int)); }
+
+    /**
+       @param nodal sister node.
+       @return list of all children Nodes of input node's mother.
+    */
+    public Vector GetAllSisters (Node nodal) {
+	Integer dex = nodal.getIndex();
+	return(GetAllSisters(dex)); }
+ 
+    /**
+       @param dex Integer index of sister node.
+       @return list of all children Nodes of input node's mother.
+    */
+    public Vector GetAllSisters (Integer dex) {
+        Vector sisters = new Vector();
+        Node mother;
+
+        mother = this.GetMother(dex);
+	sisters = this.GetDaughters(mother);
+	return sisters; }
+
+    /**
+      returns true if input node is rightmost (last)
+      child of its mother.
+      @param nodal daughter node.
+      @return true if input node is rightmost.
+    */
+    public boolean IsRightMost (Node nodal) {
+	Integer mom_end;
+	Integer nodal_end;
+	Node mother;
+
+	mother = this.GetMother(nodal);
+	mom_end = this.EndDexAt(mother.getIndex());
+        nodal_end = this.EndDexAt(nodal.getIndex());
+	if (mom_end.equals(nodal_end)) {
+	    return true; }
+	return false; }
+
+    /**
+       returns true if input node is leftmost (first)
+       child of its mother.
+       @param nodal daughter node.
+       @return true if input node is leftmost.
+    */
+    public boolean IsLeftMost(Node nodal) {
+	Integer mom_start;
+	Integer nodal_start;
+	Node mother;
+
+	mother = this.GetMother(nodal);
+	mom_start = mother.getIndex();
+	nodal_start = nodal.getIndex();
+	if (mom_start.intValue() + 1 == nodal_start.intValue()) {
+	    return true; }
+	return false; }
+
+    /**
+      returns true if input index corresponds to pos-label of 
+      leaf node; false otherwise.  (Example:  true if input index corresponds
+      to "N" from the leaf "N dog".)
+      @param dex Integer index of possible pos node.
+      @return true if node is pos.
+    */
+    public boolean IsLeafPOS (Integer dex) {
+        Integer end_dex_0, end_dex_1, start_plus_1;
+
+        end_dex_0 = super.EndDexAt(dex);
+        start_plus_1 = new Integer(dex.intValue() + 1);
+        end_dex_1 = super.EndDexAt(start_plus_1);
+        if (end_dex_0.equals(end_dex_1) && end_dex_1.equals(start_plus_1)) {
+            return true; }
+        else { return false; } }
+
+    /**
+       @param dex int index of possible pos node.
+       @return true if node is pos.
+    */
+    public boolean IsLeafPOS (int dex) {
+        Integer dex_Int = new Integer(dex);
+        return (this.IsLeafPOS(dex_Int)); }
+
+    /**
+       @param nodal possible pos node.
+       @return true if input node is pos.
+    */
+    public boolean IsLeafPOS (Node nodal) {
+        Integer node_dex;
+        node_dex = nodal.getIndex();
+        return (this.IsLeafPOS(node_dex)); }
+
+    /**
+      returns true if input index corresponds to text of
+      leaf node; false otherwise.  (Example:  true if input index corresponds
+      to "dog" from the leaf "N dog".)
+      @param dex Integer index of possible text node.
+      @return true if node is text.
+    */
+    public boolean IsLeafText (Integer dex) {
+        Integer end_dex;
+	
+        end_dex = super.EndDexAt(dex);
+	if (end_dex.equals(dex)) { return true; }
+	else { return false; } }
+
+    /**
+       @param dex int index of possible text node.
+       @return true if node is text.
+    */
+    public boolean IsLeafText (int dex) {
+        Integer dex_Int = new Integer(dex);
+        return (this.IsLeafText(dex_Int)); }
+
+    /**
+       @param nodal possible text node.
+       @return true if node is text.
+    */
+    public boolean IsLeafText (Node nodal) {
+        Integer node_dex;
+        node_dex = nodal.getIndex();
+        return (this.IsLeafText(node_dex)); }
+
+    /* returns true if x dominates y. */ 
+    public boolean dominates (Node x, Node y) {
+	int end_x, x_index, y_index;
+
+	x_index = x.getIndex_int();
+	y_index = y.getIndex_int();
+	if (y_index <= x_index) { return false; }
+	end_x = (super.EndDexAt(x_index)).intValue();
+        if (y_index > end_x) { return false; }
+	return true; }
+
+    /*
+      getText -- returns text nodes dominated by input node.
+    */
+    public Vector getText(Node nodal) {
+	Vector descendants, text = new Vector();
+	Node descend;
+	
+	descendants = GetDescendants(nodal);
+	for (int i = 0; i < descendants.size(); i++) {
+	    descend = (Node)descendants.elementAt(i);
+	    if (IsLeafText(descend)) {
+		text.addElement(descend); } }
+	return text; }
+
+    public void setIDs() {
+	int end;
+	Node id;
+
+        end = super.size() - 1;
+	while (end > 0) {
+	    id = super.NodeAt(end);
+	    if (id.getLabel().equals("ID")) {
+		this.ID_POS = id;
+		this.ID_TEXT = super.NodeAt(end + 1); 
+	        return; }
+	    end -= 1; }
+	this.ID_POS = new Node("NULL");
+	this.ID_TEXT = new Node("NULL");
+        return; }
+
+    public boolean isRoot(Node nodal) {
+	return((this.ROOT).equals(nodal)); }
+
+    public boolean isMetaRoot(Node x) {
+	return ((this.METAROOT).equals(x)); }
+
+    public void setConstantNodes() {
+	this.setRoot();
+	this.setIDs(); }
+
+    public void setRoot() {
+	if (super.isEmpty()) { return; }
+	this.ROOT = this.getRootNode();
+	this.METAROOT = super.NodeAt(0);
+	return; }
+
+    public Node getRootNode() {
+	String root_label = "";
+	int root_dex = 0;
+
+	root_label = super.LabelAt(root_dex);
+	// if node has no label (label length is 0), go to next node.
+	// if node is a leafPOS, or leafText, go to next node.
+        root_look:  while (root_label.length() == 0 || IsLeafPOS(root_dex) 
+			   || IsLeafText(root_dex)) { 
+	    root_dex += 1;
+	    if (IsLeafPOS(root_dex) && (root_dex + 2) >= super.size()) {
+		return(super.NodeAt(root_dex)); }
+	    if (root_dex >= super.size()) { 
+		root_dex = 0;
+		break root_look; }
+	    root_label = super.LabelAt(root_dex); }
+        return (super.NodeAt(root_dex)); }
+
+    /**
+     * checks whether input node matches an item on Vitals.ignore_list.
+     * If node is leaf_POS, also checks leaf node.
+     * @param text string found in corpus
+     * @return true if item was found on ignore_list, false otherwise
+     */
+    public boolean ignoreIt (Node nodal) {
+        String label;
+        Node leaf;
+
+        label = nodal.getLabel();
+        if (Vitals.ignore_list.hasMatch(label)) {
+            return true; }
+        if (this.IsLeafPOS(nodal)) {
+            leaf = this.FirstDaughter(nodal);
+            label = leaf.getLabel();
+            if (Vitals.ignore_list.hasMatch(label)) {
+                return(true); } }
+        return (false); }
+    /**
+     * checks whether input node matches an item on Vitals.ignore_list.
+     * If node is leaf_POS, also checks leaf node.
+     * @param text string found in corpus
+     * @return true if item was found on ignore_list, false otherwise
+     */
+    public boolean ignoreIt (Node nodal, int i) {
+        String label;
+        Node leaf;
+
+        label = nodal.getLabel();
+        if (Vitals.ignore_list.hasMatch(label, i)) {
+            return true; }
+        if (this.IsLeafPOS(nodal)) {
+            leaf = this.FirstDaughter(nodal);
+            label = leaf.getLabel();
+            if (Vitals.ignore_list.hasMatch(label, i)) {
+                return(true); } }
+        return (false); }
+
+    public boolean IsOnList(Node nodal, ArgList argle) {
+
+        if (ignoreIt(nodal)) {
+            return false; }
+        if (argle.hasRoot() && nodal.equals(this.ROOT)) {
+            return true; }
+        if (argle.hasMetaroot() && nodal.equals(this.METAROOT)) {
+            return true; }
+        return (argle.hasMatch(nodal.getLabel())); }
+
+    public boolean IsOnList(Node nodal, ArgList argle, int i) {
+
+        if (ignoreIt(nodal, i)) {
+            return false; }
+        if (argle.hasRoot() && nodal.equals(this.ROOT)) {
+            return true; }
+        if (argle.hasMetaroot() && nodal.equals(this.METAROOT)) {
+            return true; }
+        return (argle.hasMatch(nodal.getLabel(), i)); }
+
+    /**
+     * checks whether the label of the  input node
+     * is on the boundary list.
+     */
+    public boolean IsBoundary (Node nodal) {
+
+        if (Vitals.Node_List.hasRoot() && nodal.equals(this.ROOT)) {
+            return true; }
+        if (Vitals.Node_List.hasMetaroot() && nodal.equals(this.METAROOT)) {
+            return true; }
+        return (Vitals.Node_List.hasMatch(nodal.getLabel())); }
+
+    /**
+     * given a node, returns a list of text words
+     * (leaves) dominated by that node.
+     */
+    public Vector GetText(Node nodal) {
+        Vector descendants, texts = new Vector();
+        Node heir, leaf;
+        String text;
+        int n;
+
+        descendants = this.GetDescendants(nodal);
+        for (n = 0; n < descendants.size(); n++) {
+            heir = (Node)descendants.elementAt(n);
+            if (this.IsLeafText(heir)) {
+                texts.addElement(heir.getLabel()); } }
+        return texts; }
+
+    /**
+     * given a node, returns a list of text nodes
+     * dominated by the input node.
+     */
+    public Vector GetTextNodes(Node nodal) {
+        Vector descendants, text_nodes = new Vector();
+        Node heir;
+        String text;
+        int n;
+
+        descendants = this.GetDescendants(nodal);
+        for (n = 0; n < descendants.size(); n++) {
+            heir = (Node)descendants.elementAt(n);
+            if (this.IsLeafText(heir)) {
+                text_nodes.addElement(heir); } }
+        return text_nodes; }
+
+    /**
+     * returns boundary for nodes x and y where x does not dominate y
+     * and y does not dominate x.
+     */
+    public Node GetBoundaryNode (Node x_node, Node y_node) {
+        Node everymom, forebear;
+        Vector ancestors;
+        int i;
+
+        everymom = this.GetCommonAncestor(x_node, y_node);
+        if (this.IsBoundary(everymom)) {
+            return everymom; }
+        ancestors = this.GetAncestors(everymom);
+        for (i = 0; i < ancestors.size(); i++) {
+            forebear = (Node)ancestors.elementAt(i);
+            if (this.IsBoundary(forebear)) {
+                return forebear; } }
+        forebear = new Node("NULL");
+        return forebear; }
+    /*
+    public Vector getMatches (ArgList argg) {
+        int i, j, k;
+        Vector matches = new Vector();
+	BitSet nords;
+	Node nodorous;
+	TreeBuckets bucko;
+
+	bucko = super.buckt;
+	for (i = 0; i < bucko.size(); i++) {
+	    if (bucko.fullBucket(i)) {
+		nords = bucko.bucketAt(i);
+		for (j = 0; j < nords.size(); j++) {
+		    if (nords.get(j)) {          
+			nodorous = super.NodeAt(j);
+			if (IsOnList(nodorous, argg, i)) {
+			    matches.addElement(nodorous); } } } } }
+	return matches; }
+    
+    public void PrintBucketsToSystemErr(TreeBuckets buckle) {
+        BitSet buck;
+        Node nodal;
+        int i, j;
+
+        for (i = 0; i < buckle.hasBucketSize(); i++) {
+            if (buckle.hasBucketGet(i)) {
+                buck = buckle.bucketAt(i);
+                System.err.print(i + ".)  ");
+                for (j = 0; j < buck.size(); j++) {
+                    if (buck.get(j)) {
+                        nodal = super.NodeAt(j);
+                        System.err.print(nodal.toString());
+                        if (j < buck.size() - 1) {
+                            System.err.print("|"); } } }
+                System.err.println(""); } }
+        return; }
+
+
+    public static void main(String[] args) {
+	Node everymom;
+	SynTree sparse = new SynTree("EXAMPLE");
+	everymom = sparse.GetCommonAncestor(7,9);
+	System.err.println("everymom:  ");
+	everymom.PrintToSystemErr();
+	System.err.println("");
+	return; }
+
+} 
+
+

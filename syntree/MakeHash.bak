@@ -1,0 +1,135 @@
+/*
+	Beth Randall:  October 2000 
+	MakeHash.java
+*/
+package csearch;
+
+import java.util.*;
+import search.*;
+import syntree.*;
+
+public class MakeHash extends SearchOne {
+
+    /*
+      BuildFunctionHash -- builds HashMap containing: 
+      keys)  names of search-function methods
+      values) pointers to search-function methods.
+      input -- void (uses FunctionCalls).
+      output -- void.
+      side-effect -- function_hash has been built.
+    */
+    public static void BuildFunctionHash () {
+
+        try {
+            Class[] oneVec = new Class[] {Vector.class};
+            Class[] twoVecs = new Class[] {Vector.class, Vector.class};
+            Class[] twoVecsOneInt = new Class[] {Vector.class, Vector.class,
+                                                 Integer.class};
+            Class[] oneVecOneInt = new Class[] {Vector.class, Integer.class};
+            Class[] twoVecsOneTree = new Class[] {Vector.class,
+                                                  Vector.class, SynTree.class};
+            function_hash.put("iDominates",
+                              iDominates.class.getMethod("Plain",
+                                                         twoVecs));
+            //function_hash.put("iDominates_not_x",
+            //	      iDominates.class.getMethod("Not_x", twoVecs));
+            //function_hash.put("iDominates_not_y",
+            //	      iDominates.class.getMethod("Not_y", twoVecs));
+            //function_hash.put("precedes",
+            //Precedes.class.getMethod("Plain", twoVecs));
+            //function_hash.put("precedes_not_x",
+            //	      Precedes.class.getMethod("Not_x", twoVecs));
+            //function_hash.put("precedes_not_y",
+            //Precedes.class.getMethod("Not_y", twoVecs));
+            //function_hash.put("iPrecedes",
+            //iPrecedes.class.getMethod("Plain", twoVecs));
+            //function_hash.put("iPrecedes_not_x",
+            //	      iPrecedes.class.getMethod("Not_x", twoVecs));
+            //function_hash.put("iPrecedes_not_y",
+            //	      iPrecedes.class.getMethod("Not_y", twoVecs));
+            //function_hash.put("dominates",
+            //Dominates.class.getMethod("Plain", twoVecs));
+            //function_hash.put("dominates_not_x",
+            //	      Dominates.class.getMethod("Not_x", twoVecs));
+            //function_hash.put("dominates_not_y",
+            //	      Dominates.class.getMethod("Not_y", twoVecs));
+            //function_hash.put("anyPrecedes",
+            //anyPrecedes.class.getMethod("Plain", twoVecs));
+            //function_hash.put("anyPrecedes_not_x",
+            //	      anyPrecedes.class.getMethod("Not_x", twoVecs));
+            //function_hash.put("anyPrecedes_not_y",
+            //	      anyPrecedes.class.getMethod("Not_y", twoVecs));
+            ///function_hash.put("iDomsOnly",
+            //iDomsOnly.class.getMethod("Plain", twoVecs));
+            //function_hash.put("iDomsOnly_not_x",
+            //	      iDomsOnly.class.getMethod("Not_x", twoVecs));
+            //function_hash.put("iDomsOnly_not_y",
+            //	      iDomsOnly.class.getMethod("Not_y", twoVecs));
+            //function_hash.put("iDomsNumber",
+            //	      iDomsNumber.class.getMethod("Plain", twoVecsOneInt));
+            //function_hash.put("iDomsNumber_not_x",
+            //	      iDomsNumber.class.getMethod("Not_x", twoVecsOneInt));
+            //function_hash.put("iDomsNumber_not_y",
+            //	      iDomsNumber.class.getMethod("Not_y", twoVecsOneInt));
+            //function_hash.put("iDomsLast",
+            //	      iDomsLast.class.getMethod("Plain", twoVecsOneInt));
+            //function_hash.put("iDomsLast_not_x",
+            //	      iDomsLast.class.getMethod("Not_x", twoVecsOneInt));
+            //function_hash.put("iDomsLast_not_y",
+            //	      iDomsLast.class.getMethod("Not_y", twoVecsOneInt));
+            //function_hash.put("iDomsTotal",
+            //	      iDomsTotal.class.getMethod("Plain", oneVecOneInt));
+            //function_hash.put("iDomsTotal_not_x",
+            //	      iDomsTotal.class.getMethod("Not_x", oneVecOneInt));
+            //function_hash.put("iDomsTotalLess",
+            //	      iDomsTotalLess.class.getMethod("Plain", oneVecOneInt));
+            //function_hash.put("iDomsTotalLess_not_x",
+            //	      iDomsTotalLess.class.getMethod("Not_x", oneVecOneInt));
+            //function_hash.put("iDomsTotalMore",
+            //	      iDomsTotalMore.class.getMethod("Plain", oneVecOneInt));
+            //function_hash.put("iDomsTotalMore_not_x",
+            //	      iDomsTotalMore.class.getMethod("Not_x", oneVecOneInt));
+            //function_hash.put("domsWords",
+            //	      DomsWords.class.getMethod("Plain", oneVecOneInt));
+            //function_hash.put("domsWords_not_x",
+            //	      DomsWords.class.getMethod("Not_x", oneVecOneInt));
+            //function_hash.put("domsWordsLess",
+            //	      DomsWordsLess.class.getMethod("Plain", oneVecOneInt));
+            //function_hash.put("domsWordsLess_not_x",
+            //	      DomsWordsLess.class.getMethod("Not_x", oneVecOneInt));
+            //function_hash.put("domsWordsMore",
+            //	      DomsWordsMore.class.getMethod("Plain", oneVecOneInt));
+            //function_hash.put("domsWordsMore_not_x",
+            //		      DomsWordsMore.class.getMethod("Not_x", oneVecOneInt));
+            //function_hash.put("exists",
+            //	      Exists.class.getMethod("Plain", oneVec));
+            //function_hash.put("exists_not_x",
+            //	      Exists.class.getMethod("Not_x", oneVec));
+            //function_hash.put("column",
+            //Column.class.getMethod("Plain", oneVecOneInt));
+            //function_hash.put("column_not_y",
+            //	      Column.class.getMethod("Not_y", oneVecOneInt));
+            //function_hash.put("inID", inID.class.getMethod("Plain", oneVec));
+            //function_hash.put("inID_not_x",
+            //inID.class.getMethod("Not_x", oneVec));
+            //function_hash.put("ccommands",
+            //CCommands.class.getMethod("Plain", twoVecs));
+
+        } // end try
+        catch (NoSuchMethodException nsme) {
+            System.err.println("in MakeHash:  BuildFunctionHash");
+            System.err.println("function_hash:  " + function_hash);
+            System.err.println(nsme);
+            System.err.println("Search aborted.");
+            System.err.println(nsme.toString());
+            nsme.printStackTrace();
+            CorpusSearch.SearchExit();
+        } // end catch
+        finally {
+            return;
+        } // end finally
+    } // end BuildFunctionHash
+
+
+} // end class MakeHash
+

@@ -1,0 +1,113 @@
+#!/bin/sh
+
+# copies latest version of CS from beth's babel directory 3/22/04
+
+/bin/rm -r coding
+/bin/rm -r CodingParse
+/bin/rm -r CSParse
+/bin/rm -r FramesParse
+/bin/rm -r command
+/bin/rm -r convert
+/bin/rm -r csearch
+/bin/rm -r io
+/bin/rm -r print
+/bin/rm -r search
+/bin/rm -r search_result
+/bin/rm -r stats
+/bin/rm -r basicinfo
+/bin/rm -r syntree
+/bin/rm -r frames
+/bin/rm -r test
+/bin/rm -r lexicon
+
+mkdir coding
+cd coding
+cp /mnt/babel/home/brandall/latest_newCS/coding/*.java ./.
+chmod 755 *
+cd ../
+mkdir CodingParse
+cd CodingParse
+cp mnt/babel/home/brandall/latest_newCS/CodingParse/*.java ./.
+chmod 755 *
+cd ../
+mkdir CSParse
+cd CSParse
+cp /mnt/babel/home/brandall/latest_newCS/CSParse/*.java ./.
+chmod 755 *
+cd ../
+mkdir FramesParse
+cd FramesParse
+cp /mnt/babel/home/brandall/latest_newCS/FramesParse/*.java ./.
+chmod 755 *
+cd ../
+mkdir command
+cd command
+cp /mnt/babel/home/brandall/latest_newCS/command/*.java ./.
+chmod 755 *
+cd ../
+mkdir convert
+cd convert
+cp /mnt/babel/home/brandall/latest_newCS/convert/*.java ./.
+chmod 755 *
+cd ../
+mkdir csearch
+cd csearch
+cp /mnt/babel/home/brandall/latest_newCS/csearch/*.java ./.
+chmod 755 *
+cd ../
+mkdir io
+cd io
+cp /mnt/babel/home/brandall/latest_newCS/io/*.java ./.
+chmod 755 *
+cd ../
+mkdir print
+cd print
+cp /mnt/babel/home/brandall/latest_newCS/print/*.java ./.
+chmod 755 *
+cd ../
+mkdir search
+cd search
+cp /mnt/babel/home/brandall/latest_newCS/search/*.java ./.
+chmod 755 *
+cd ../
+mkdir search_result
+cd search_result
+cp /mnt/babel/home/brandall/latest_newCS/search_result/*.java ./.
+chmod 755 *
+cd ../
+mkdir stats
+cd stats
+cp /mnt/babel/home/brandall/latest_newCS/stats/*.java ./.
+chmod 755 *
+cd ../
+mkdir basicinfo
+cd basicinfo
+cp /mnt/babel/home/brandall/latest_newCS/basicinfo/*.java ./.
+chmod 755 *
+cd ../
+mkdir syntree
+cd syntree
+cp /mnt/babel/home/brandall/latest_newCS/syntree/*.java ./.
+chmod 755 *
+cd ../
+mkdir frames
+cd frames
+cp /mnt/babel/home/brandall/latest_newCS/frames/*.java ./.
+chmod 755 *
+cd ../
+mkdir lexicon
+cd lexicon
+cp /mnt/babel/home/brandall/latest_newCS/lexicon/*.java ./.
+chmod 755 *
+cd ../
+mkdir test
+cd test
+cp /mnt/babel/home/brandall/latest_newCS/test/*.q ./.
+chmod 755 *
+cd ../
+cp /mnt/babel/home/brandall/latest_newCS/compile ./.
+chmod 755 *
+
+
+
+
